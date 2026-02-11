@@ -1,56 +1,52 @@
 import os
+from pathlib import Path
 import joblib
 import pandas as pd
 
 from sklearn.ensemble import RandomForestRegressor
-
 from ai.src.features import make_features, make_price_target
 
-RAW_DIR = "ai/data/raw"
-MODEL_DIR = "ai/models"
+
+# =====================
+# Paths
+# =====================
+
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+RAW_DIR = BASE_DIR / "ai" / "data" / "raw"
+MODEL_DIR = BASE_DIR / "ai" / "models"
 
 os.makedirs(MODEL_DIR, exist_ok=True)
 
-FEATURE_COLS = [
-    "return",
-    "ma_5",
-    "ma_20",
-    "volatility",
-    "volume_ma"
-]
 
+# =====================
+# Train One
+# =====================
 
 def train_price_model(symbol: str, interval: str, horizon: int = 1):
-    path = f"{RAW_DIR}/{symbol}_{interval}.csv"
-    if not os.path.exists(path):
-        print(f"[SKIP] {path} not found")
+
+    path = RAW_DIR / f"{symbol}_{interval}.csv"
+
+    if not path.exists():
+        print(f"[SKIP] {symbol} {interval} (CSV not found)")
         return
 
     df = pd.read_csv(path)
 
-    # ① features
     df_feat = make_features(df)
-
-    # ② target（同じ df_feat に追加）
     df_feat["target"] = make_price_target(df_feat, horizon=horizon)
-
-    # ③ 欠損をまとめて削除
     df_feat = df_feat.dropna()
 
-    X = df_feat[FEATURE_COLS]
-    y = df_feat["target"]
-
-    # =========================
-    # 🔥 週足用に最小本数を分岐
-    # =========================
-    if interval == "1w":
-        min_required = 80
-    else:
-        min_required = 200
-
-    if len(X) < min_required:
-        print(f"[SKIP] {symbol} {interval} h={horizon} (data too small: {len(X)})")
+    if len(df_feat) < 150:
+        print(f"[SKIP] {symbol} {interval} (data too small: {len(df_feat)})")
         return
+
+    feature_cols = [
+        col for col in df_feat.columns
+        if col not in ["target", "open_time"]
+    ]
+
+    X = df_feat[feature_cols]
+    y = df_feat["target"]
 
     model = RandomForestRegressor(
         n_estimators=300,
@@ -61,7 +57,33 @@ def train_price_model(symbol: str, interval: str, horizon: int = 1):
 
     model.fit(X, y)
 
-    model_path = f"{MODEL_DIR}/{symbol}_{interval}_price_h{horizon}.pkl"
+    model_path = MODEL_DIR / f"{symbol}_{interval}_price_h{horizon}.pkl"
     joblib.dump(model, model_path)
 
-    print(f"[OK] saved {model_path}")
+    print(f"[OK] saved {model_path.name}")
+
+
+# =====================
+# Train All
+# =====================
+
+def main():
+
+    files = [f for f in os.listdir(RAW_DIR) if f.endswith(".csv")]
+
+    print(f"Found {len(files)} CSV files\n")
+
+    for file in files:
+        try:
+            name = file.replace(".csv", "")
+            symbol, interval = name.rsplit("_", 1)
+            train_price_model(symbol, interval, horizon=1)
+
+        except Exception as e:
+            print(f"[ERROR] {file} -> {e}")
+
+    print("\nPrice training completed.")
+
+
+if __name__ == "__main__":
+    main()

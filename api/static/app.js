@@ -263,3 +263,25 @@ setInterval(() => {
     loadPrediction({ silent: true });
   }
 }, 60000);
+
+// =========================
+// Symbol Search
+// =========================
+document.getElementById("symbolSearch")
+  .addEventListener("input", function () {
+
+    const keyword = this.value.trim().toUpperCase();
+
+    if (!keyword) {
+      renderSymbolOptions(ALL_SYMBOLS);
+      return;
+    }
+
+    const filtered = ALL_SYMBOLS.filter(c =>
+      c.symbol.toUpperCase().includes(keyword) ||
+      (c.name && c.name.toUpperCase().includes(keyword))
+    );
+
+    renderSymbolOptions(filtered);
+  });
+

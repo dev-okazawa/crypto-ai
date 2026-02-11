@@ -16,15 +16,32 @@ function normalizePrices(data, chartWidth, chartHeight, min, max, minTime, maxTi
 function formatTime(ts, interval) {
   const d = new Date(ts);
 
-  if (interval === "1h") {
-    return `${String(d.getUTCHours()).padStart(2, "0")}:00`;
+  if (interval === "1w") {
+    return `${d.getUTCMonth() + 1}/${d.getUTCDate()}`;
   }
 
-  if (interval === "1d" || interval === "1w") {
-    return `${d.getUTCMonth()+1}/${d.getUTCDate()}`;
+  return `${String(d.getUTCHours()).padStart(2, "0")}:00`;
+}
+
+function generateXTicks(minTime, maxTime, chartWidth) {
+
+  // 1ラベルあたり最低80px確保
+  const approxLabelWidth = 80;
+
+  const maxLabels = Math.max(
+    3,
+    Math.floor(chartWidth / approxLabelWidth)
+  );
+
+  const ticks = [];
+  const totalRange = maxTime - minTime;
+  const step = totalRange / (maxLabels - 1);
+
+  for (let i = 0; i < maxLabels; i++) {
+    ticks.push(minTime + step * i);
   }
 
-  return d.toUTCString();
+  return ticks;
 }
 
 function formatPrice(value) {
@@ -44,7 +61,12 @@ function renderPredictionChart({ chart, diff, interval = "1h", mode = "full" }) 
   }
 
   const isMini = mode === "mini";
-  const width = isMini ? 330 : 720;
+
+  // 🔥 レスポンシブ幅（スマホ対応）
+  const width = isMini
+    ? 330
+    : Math.min(window.innerWidth - 40, 720);
+
   const height = isMini ? 60 : 200;
 
   const margin = isMini
@@ -53,10 +75,6 @@ function renderPredictionChart({ chart, diff, interval = "1h", mode = "full" }) 
 
   const chartWidth = width - margin.left - margin.right;
   const chartHeight = height - margin.top - margin.bottom;
-
-  // =====================
-  // 🔥 実timestamp使用
-  // =====================
 
   const pastData = chart.candles.map(c => ({
     time: c.time,
@@ -78,13 +96,11 @@ function renderPredictionChart({ chart, diff, interval = "1h", mode = "full" }) 
 
     const intervalMs = intervalMap[interval] || 3600000;
 
-    // 1本目（本来の予測）
     futureData.push({
       time: firstFuture.time,
       price: firstFuture.value
     });
 
-    // 🔥 2本目（自然延長）
     const slope = firstFuture.value - lastCandle.close;
 
     futureData.push({
@@ -132,9 +148,30 @@ function renderPredictionChart({ chart, diff, interval = "1h", mode = "full" }) 
   let axes = "";
 
   if (!isMini) {
+
     const yMin = margin.top + chartHeight;
     const yMid = margin.top + chartHeight / 2;
     const yMax = margin.top;
+
+    const xTicks = generateXTicks(minTime, maxTime, chartWidth);
+
+    const xLabels = xTicks.map(t => {
+
+      const x =
+        margin.left +
+        ((t - minTime) / (maxTime - minTime || 1)) *
+        chartWidth;
+
+      return `
+        <text x="${x}"
+              y="${height - 15}"
+              text-anchor="middle"
+              font-size="16"
+              fill="#94a3b8">
+          ${formatTime(t, interval)}
+        </text>
+      `;
+    }).join("");
 
     axes = `
       <line x1="${margin.left}" y1="${yMax}"
@@ -149,7 +186,6 @@ function renderPredictionChart({ chart, diff, interval = "1h", mode = "full" }) 
             x2="${margin.left + chartWidth}" y2="${yMin}"
             stroke="#1f2937"/>
 
-      <!-- Y Labels (16px統一) -->
       <text x="${margin.left - 15}" y="${yMax + 6}"
             text-anchor="end"
             font-size="16"
@@ -171,21 +207,7 @@ function renderPredictionChart({ chart, diff, interval = "1h", mode = "full" }) 
         ${formatPrice(min)}
       </text>
 
-      <!-- X Labels (16px統一) -->
-      <text x="${margin.left}"
-            y="${height - 15}"
-            font-size="16"
-            fill="#94a3b8">
-        ${formatTime(minTime, interval)}
-      </text>
-
-      <text x="${margin.left + chartWidth}"
-            y="${height - 15}"
-            text-anchor="end"
-            font-size="16"
-            fill="#94a3b8">
-        ${formatTime(maxTime, interval)}
-      </text>
+      ${xLabels}
     `;
   }
 

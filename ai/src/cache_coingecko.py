@@ -14,7 +14,7 @@ def main():
         params={
             "vs_currency": "usd",
             "order": "market_cap_desc",
-            "per_page": 200,
+            "per_page": 300,
             "page": 1,
         },
         timeout=15,

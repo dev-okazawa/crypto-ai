@@ -1,10 +1,7 @@
-venv/
-.venv/
-__pycache__/
-*.pyc
-.DS_Store
-.env
+# Data & models (production generated)
+ai/data/
+ai/models/
+ai/state/
 logs/
 cache/
-Miniconda3-latest-MacOSX-arm64.sh
 

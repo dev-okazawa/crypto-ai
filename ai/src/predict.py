@@ -5,16 +5,9 @@ from datetime import datetime
 
 from ai.src.features import make_features
 
-DATA_DIR = "ai/data/raw"
-MODEL_DIR = "ai/models"
-
-FEATURE_COLS = [
-    "return",
-    "ma_5",
-    "ma_20",
-    "volatility",
-    "volume_ma"
-]
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+DATA_DIR = os.path.join(BASE_DIR, "ai", "data", "raw")
+MODEL_DIR = os.path.join(BASE_DIR, "ai", "models")
 
 
 def load_csv(symbol, interval):
@@ -32,51 +25,44 @@ def load_model(symbol, interval, kind, horizon):
 
 
 def predict(symbol: str, interval: str, horizon: int):
-    # =====================
-    # Load CSV & features
-    # =====================
+
     df = load_csv(symbol, interval)
+
+    # === feature生成（trainと完全一致）
     df_feat = make_features(df)
 
     if len(df_feat) <= horizon:
         raise ValueError("Not enough data")
 
-    # ★ CSV 最終行 = モデル基準価格
     current_price = float(df_feat["close"].iloc[-1])
 
-    # ★ CSV 最終行の時刻（UTC / 分まで）
     raw_time = df_feat["open_time"].iloc[-1]
-
-    if isinstance(raw_time, str):
-        dt = pd.to_datetime(raw_time, utc=True)
-    else:
-        dt = raw_time
-
+    dt = pd.to_datetime(raw_time, utc=True)
     current_price_at = dt.strftime("%Y-%m-%d %H:%M")
 
-    X = df_feat[FEATURE_COLS].iloc[:-horizon]
+    # 🔥 trainと同じ列抽出ロジック
+    feature_cols = [
+        col for col in df_feat.columns
+        if col not in ["open_time"]
+    ]
 
-    # =====================
-    # Load models
-    # =====================
+    X_all = df_feat[feature_cols]
+    X = X_all.iloc[:-horizon]
+
     price_model = load_model(symbol, interval, "price", horizon)
     direction_model = load_model(symbol, interval, "direction", horizon)
 
-    # =====================
-    # Predict
-    # =====================
-    predicted_price = float(price_model.predict(X.tail(1))[0])
+    X_last = X.tail(1)
 
-    direction_raw = int(direction_model.predict(X.tail(1))[0])
+    predicted_price = float(price_model.predict(X_last)[0])
+
+    direction_raw = int(direction_model.predict(X_last)[0])
     direction_internal = (
         "UP" if direction_raw == 1
         else "DOWN" if direction_raw == -1
         else "FLAT"
     )
 
-    # =====================
-    # 差分（UIの唯一の真実）
-    # =====================
     diff = predicted_price - current_price
     pct_change = diff / current_price * 100
 
@@ -94,23 +80,13 @@ def predict(symbol: str, interval: str, horizon: int):
         "symbol": symbol,
         "interval": interval,
         "horizon": horizon,
-
-        # ★ UIが信じる価格
         "current_price": current_price,
         "predicted_price": predicted_price,
-
-        # ★ 表示用（UTC / 分まで）
         "current_price_at": current_price_at,
-
         "diff": diff,
         "pct_change": round(pct_change, 2),
         "trend": trend,
-
-        # 内部参考
         "direction_internal": direction_internal,
-
         "confidence": confidence,
-
-        # 推論実行時刻（UIには使わない）
         "generated_at": datetime.utcnow().isoformat(),
     }
