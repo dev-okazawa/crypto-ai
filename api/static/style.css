@@ -1,0 +1,292 @@
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background: #0f172a;
+  color: #e5e7eb;
+  margin: 0;
+  padding: 12px;
+}
+
+.container {
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.card {
+  background: #020617;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+
+h1 {
+  margin-top: 0;
+  text-align: center;
+}
+
+select, button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  margin-bottom:12px;
+  border-radius: 6px;
+  border: none;
+  font-size: 14px;
+}
+
+button {
+  background: #2563eb;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #1d4ed8;
+}
+
+.result {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 10px;
+  background: #020617;
+}
+
+.result-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.result-label {
+  color: #94a3b8;
+  min-width: 120px;
+}
+
+.direction {
+  font-weight: bold;
+}
+
+.direction.up {
+  color: #22c55e;
+}
+
+.direction.down {
+  color: #ef4444;
+}
+
+.direction.flat {
+  color: #9ca3af;
+  font-weight: 600;
+}
+
+/* Confidence bar */
+.confidence-row {
+  gap: 8px;
+}
+
+.confidence-bar {
+  flex: 1;
+  height: 8px;
+  background: #1e293b;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.confidence-fill {
+  height: 100%;
+  width: 0%;
+  background: #38bdf8;
+  transition: width 0.4s ease, background 0.3s ease;
+}
+
+.footer {
+  text-align: center;
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 48px;
+}
+
+.trained-box {
+  margin: 12px 0 20px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.trained-label {
+  font-size: 16px;
+  opacity: 0.7;
+}
+
+.trained-number {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+#symbolSearch {
+  width: 100%;
+  padding: 10px 12px;
+  margin-top:10px;
+  margin-bottom: 14px;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+  background: #fff;
+  color: #000;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+#symbolSearch::placeholder {
+  color: #9ca3af;
+}
+
+#symbolSearch:focus {
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.6);
+}
+
+.nav-button {
+  display: block;
+  margin: 16px 0 20px;
+  padding: 14px;
+  text-align: center;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #6366f1, #22c55e);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 15px;
+  text-decoration: none;
+}
+
+.nav-button:active {
+  transform: scale(0.98);
+}
+
+.market-snapshot {
+  margin-top: 16px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.snapshot-title {
+  font-size: 16px;
+  margin-bottom: 12px;
+  opacity: 0.85;
+}
+
+/* =====================
+   Trend × Confidence Guide（修正版）
+===================== */
+
+.trend-help {
+  position: relative;
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #9ca3af;
+}
+
+/* ★ 中央寄せ + 画面内制限 */
+.trend-popup {
+  position: absolute;
+  bottom: 140%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+
+  width: max-content;
+  max-width: 280px;
+
+  padding: 12px 14px;
+  border-radius: 12px;
+
+  background: rgba(2, 6, 23, 0.96);
+  color: #e5e7eb;
+
+  font-size: 12px;
+  line-height: 1.5;
+
+  box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.trend-help:hover .trend-popup {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.trend-popup strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.trend-popup ul {
+  margin: 6px 0;
+  padding-left: 18px;
+}
+
+.trend-popup li {
+  margin-bottom: 6px;
+}
+
+.trend-popup small {
+  display: block;
+  margin-top: 6px;
+  opacity: 0.6;
+}
+
+/* 📱 モバイルでは下に出す */
+@media (max-width: 480px) {
+  .trend-popup {
+    top: 140%;
+    bottom: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 90vw;
+  }
+}
+
+.muted {
+  opacity: 0.65;
+  font-size: 0.9em;
+}
+
+.live-market .result-row {
+  align-items: flex-start;
+}
+
+.live-market .result-label {
+  min-width: 140px;
+}
+
+/* =========================
+   Live Market - Source
+========================= */
+
+.live-source {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 6px;
+  font-size: 0.85em;
+  opacity: 0.6;
+}
+
+.live-source-label {
+  text-align: left;
+}
+
+.live-source-time {
+  text-align: right;
+  white-space: nowrap;
+}
+

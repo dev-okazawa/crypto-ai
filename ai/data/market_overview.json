@@ -1,0 +1,403 @@
+{
+  "generated_at": "2026-02-08T01:05:08.609531+00:00",
+  "interval": "1d",
+  "horizon": 7,
+  "items": [
+    {
+      "rank": 1,
+      "symbol": "ICPUSDT",
+      "current_price": 2.506,
+      "predicted_price": 3.593945888165972,
+      "pct_change": 43.41,
+      "direction": "DOWN",
+      "confidence": 56
+    },
+    {
+      "rank": 2,
+      "symbol": "SOLUSDT",
+      "current_price": 87.01,
+      "predicted_price": 112.9555034866463,
+      "pct_change": 29.82,
+      "direction": "DOWN",
+      "confidence": 70
+    },
+    {
+      "rank": 3,
+      "symbol": "XRPUSDT",
+      "current_price": 1.4576,
+      "predicted_price": 1.8612887052595435,
+      "pct_change": 27.7,
+      "direction": "DOWN",
+      "confidence": 72
+    },
+    {
+      "rank": 4,
+      "symbol": "AAVEUSDT",
+      "current_price": 115.26,
+      "predicted_price": 146.435619417922,
+      "pct_change": 27.05,
+      "direction": "UP",
+      "confidence": 72
+    },
+    {
+      "rank": 5,
+      "symbol": "DOTUSDT",
+      "current_price": 1.356,
+      "predicted_price": 1.7023917585916362,
+      "pct_change": 25.55,
+      "direction": "DOWN",
+      "confidence": 74
+    },
+    {
+      "rank": 6,
+      "symbol": "TAOUSDT",
+      "current_price": 170.0,
+      "predicted_price": 213.3287926676529,
+      "pct_change": 25.49,
+      "direction": "DOWN",
+      "confidence": 74
+    },
+    {
+      "rank": 7,
+      "symbol": "ETHUSDT",
+      "current_price": 2053.98,
+      "predicted_price": 2531.662172023719,
+      "pct_change": 23.26,
+      "direction": "DOWN",
+      "confidence": 76
+    },
+    {
+      "rank": 8,
+      "symbol": "SEIUSDT",
+      "current_price": 0.0766,
+      "predicted_price": 0.09351741617496111,
+      "pct_change": 22.09,
+      "direction": "DOWN",
+      "confidence": 77
+    },
+    {
+      "rank": 9,
+      "symbol": "LINKUSDT",
+      "current_price": 8.95,
+      "predicted_price": 10.802073070290296,
+      "pct_change": 20.69,
+      "direction": "DOWN",
+      "confidence": 79
+    },
+    {
+      "rank": 10,
+      "symbol": "ALGOUSDT",
+      "current_price": 0.0978,
+      "predicted_price": 0.11720104293252696,
+      "pct_change": 19.84,
+      "direction": "DOWN",
+      "confidence": 80
+    },
+    {
+      "rank": 11,
+      "symbol": "BNBUSDT",
+      "current_price": 655.17,
+      "predicted_price": 774.4807808955397,
+      "pct_change": 18.21,
+      "direction": "DOWN",
+      "confidence": 81
+    },
+    {
+      "rank": 12,
+      "symbol": "FILUSDT",
+      "current_price": 0.976,
+      "predicted_price": 1.1507107151463642,
+      "pct_change": 17.9,
+      "direction": "DOWN",
+      "confidence": 82
+    },
+    {
+      "rank": 13,
+      "symbol": "AVAXUSDT",
+      "current_price": 9.22,
+      "predicted_price": 10.890072871527613,
+      "pct_change": 18.11,
+      "direction": "DOWN",
+      "confidence": 81
+    },
+    {
+      "rank": 14,
+      "symbol": "DOGEUSDT",
+      "current_price": 0.0979,
+      "predicted_price": 0.11495009277727507,
+      "pct_change": 17.42,
+      "direction": "DOWN",
+      "confidence": 82
+    },
+    {
+      "rank": 15,
+      "symbol": "ADAUSDT",
+      "current_price": 0.2724,
+      "predicted_price": 0.317206227122551,
+      "pct_change": 16.45,
+      "direction": "DOWN",
+      "confidence": 83
+    },
+    {
+      "rank": 16,
+      "symbol": "SHIBUSDT",
+      "current_price": 6.34e-06,
+      "predicted_price": 7.341183075018138e-06,
+      "pct_change": 15.79,
+      "direction": "DOWN",
+      "confidence": 84
+    },
+    {
+      "rank": 17,
+      "symbol": "NEARUSDT",
+      "current_price": 1.075,
+      "predicted_price": 1.2362988978585778,
+      "pct_change": 15.0,
+      "direction": "DOWN",
+      "confidence": 84
+    },
+    {
+      "rank": 18,
+      "symbol": "BONKUSDT",
+      "current_price": 6.42e-06,
+      "predicted_price": 7.299093386531273e-06,
+      "pct_change": 13.69,
+      "direction": "DOWN",
+      "confidence": 86
+    },
+    {
+      "rank": 19,
+      "symbol": "JUPUSDT",
+      "current_price": 0.1655,
+      "predicted_price": 0.18657047168344462,
+      "pct_change": 12.73,
+      "direction": "DOWN",
+      "confidence": 87
+    },
+    {
+      "rank": 20,
+      "symbol": "QNTUSDT",
+      "current_price": 64.43,
+      "predicted_price": 72.44620081907152,
+      "pct_change": 12.44,
+      "direction": "DOWN",
+      "confidence": 87
+    },
+    {
+      "rank": 21,
+      "symbol": "LTCUSDT",
+      "current_price": 55.5,
+      "predicted_price": 62.345716689182325,
+      "pct_change": 12.33,
+      "direction": "UP",
+      "confidence": 87
+    },
+    {
+      "rank": 22,
+      "symbol": "BTCUSDT",
+      "current_price": 70224.72,
+      "predicted_price": 77417.39822468345,
+      "pct_change": 10.24,
+      "direction": "DOWN",
+      "confidence": 89
+    },
+    {
+      "rank": 23,
+      "symbol": "WLDUSDT",
+      "current_price": 0.3988,
+      "predicted_price": 0.4388915462895738,
+      "pct_change": 10.05,
+      "direction": "DOWN",
+      "confidence": 89
+    },
+    {
+      "rank": 24,
+      "symbol": "PEPEUSDT",
+      "current_price": 3.89e-06,
+      "predicted_price": 4.265743453707776e-06,
+      "pct_change": 9.66,
+      "direction": "DOWN",
+      "confidence": 90
+    },
+    {
+      "rank": 25,
+      "symbol": "UNIUSDT",
+      "current_price": 3.573,
+      "predicted_price": 3.8941277148573272,
+      "pct_change": 8.99,
+      "direction": "DOWN",
+      "confidence": 91
+    },
+    {
+      "rank": 26,
+      "symbol": "APTUSDT",
+      "current_price": 1.118,
+      "predicted_price": 1.2178912291831838,
+      "pct_change": 8.93,
+      "direction": "DOWN",
+      "confidence": 91
+    },
+    {
+      "rank": 27,
+      "symbol": "RENDERUSDT",
+      "current_price": 1.367,
+      "predicted_price": 1.4834360785819918,
+      "pct_change": 8.52,
+      "direction": "DOWN",
+      "confidence": 91
+    },
+    {
+      "rank": 28,
+      "symbol": "HBARUSDT",
+      "current_price": 0.09005,
+      "predicted_price": 0.08504073175944396,
+      "pct_change": -5.56,
+      "direction": "DOWN",
+      "confidence": 94
+    },
+    {
+      "rank": 29,
+      "symbol": "SUIUSDT",
+      "current_price": 1.0112,
+      "predicted_price": 1.0658385552694005,
+      "pct_change": 5.4,
+      "direction": "DOWN",
+      "confidence": 94
+    },
+    {
+      "rank": 30,
+      "symbol": "TRUMPUSDT",
+      "current_price": 3.459,
+      "predicted_price": 3.565658087301575,
+      "pct_change": 3.08,
+      "direction": "DOWN",
+      "confidence": 95
+    },
+    {
+      "rank": 31,
+      "symbol": "TRXUSDT",
+      "current_price": 0.2778,
+      "predicted_price": 0.2859867234236849,
+      "pct_change": 2.95,
+      "direction": "DOWN",
+      "confidence": 95
+    },
+    {
+      "rank": 32,
+      "symbol": "BCHUSDT",
+      "current_price": 536.2,
+      "predicted_price": 548.8990434124665,
+      "pct_change": 2.37,
+      "direction": "UP",
+      "confidence": 95
+    },
+    {
+      "rank": 33,
+      "symbol": "ARBUSDT",
+      "current_price": 0.1199,
+      "predicted_price": 0.12247502241462245,
+      "pct_change": 2.15,
+      "direction": "DOWN",
+      "confidence": 95
+    },
+    {
+      "rank": 34,
+      "symbol": "PAXGUSDT",
+      "current_price": 4992.11,
+      "predicted_price": 4908.296482501528,
+      "pct_change": -1.68,
+      "direction": "UP",
+      "confidence": 95
+    },
+    {
+      "rank": 35,
+      "symbol": "ETCUSDT",
+      "current_price": 8.81,
+      "predicted_price": 8.957428888888863,
+      "pct_change": 1.67,
+      "direction": "DOWN",
+      "confidence": 95
+    },
+    {
+      "rank": 36,
+      "symbol": "ENAUSDT",
+      "current_price": 0.1265,
+      "predicted_price": 0.12833124684944686,
+      "pct_change": 1.45,
+      "direction": "DOWN",
+      "confidence": 95
+    },
+    {
+      "rank": 37,
+      "symbol": "TONUSDT",
+      "current_price": 1.417,
+      "predicted_price": 1.3979057213301778,
+      "pct_change": -1.35,
+      "direction": "UP",
+      "confidence": 95
+    },
+    {
+      "rank": 38,
+      "symbol": "ATOMUSDT",
+      "current_price": 1.999,
+      "predicted_price": 2.0235128832581997,
+      "pct_change": 1.23,
+      "direction": "UP",
+      "confidence": 95
+    },
+    {
+      "rank": 39,
+      "symbol": "NEXOUSDT",
+      "current_price": 0.789,
+      "predicted_price": 0.7803403404834904,
+      "pct_change": -1.1,
+      "direction": "DOWN",
+      "confidence": 95
+    },
+    {
+      "rank": 40,
+      "symbol": "ONDOUSDT",
+      "current_price": 0.265,
+      "predicted_price": 0.2623151833333332,
+      "pct_change": -1.01,
+      "direction": "DOWN",
+      "confidence": 95
+    },
+    {
+      "rank": 41,
+      "symbol": "ZECUSDT",
+      "current_price": 243.14,
+      "predicted_price": 245.2136454623616,
+      "pct_change": 0.85,
+      "direction": "DOWN",
+      "confidence": 95
+    },
+    {
+      "rank": 42,
+      "symbol": "STXUSDT",
+      "current_price": 0.2688,
+      "predicted_price": 0.2672304948311809,
+      "pct_change": -0.58,
+      "direction": "DOWN",
+      "confidence": 95
+    },
+    {
+      "rank": 43,
+      "symbol": "XLMUSDT",
+      "current_price": 0.1618,
+      "predicted_price": 0.16169970848509627,
+      "pct_change": -0.06,
+      "direction": "DOWN",
+      "confidence": 95
+    },
+    {
+      "rank": 44,
+      "symbol": "VETUSDT",
+      "current_price": 0.00804,
+      "predicted_price": 0.008039984985292483,
+      "pct_change": -0.0,
+      "direction": "DOWN",
+      "confidence": 95
+    }
+  ]
+}

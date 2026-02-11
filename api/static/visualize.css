@@ -1,0 +1,224 @@
+/* =====================
+   Reset & Base
+===================== */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont;
+  background: #020617;
+  color: #e5e7eb;
+}
+
+/* =====================
+   Header
+===================== */
+
+.top {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 20px 16px 12px;
+}
+
+.top h1 {
+    margin: 6px 0 0;
+    font-size: 2em;
+    text-align: center;
+}
+
+.sub {
+  margin-top: 4px;
+  font-size: 13px;
+  opacity: 0.6;
+}
+
+/* =====================
+   Back Link
+===================== */
+
+.back-link {
+  display: inline-block;
+  font-size: 14px;
+  color: #9ca3af;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  color: #ffffff;
+}
+
+/* =====================
+   Market Overview Container
+===================== */
+
+#swipeContainer {
+  width: 100%;
+  max-width: 420px;     /* ★スマホ基準幅 */
+  margin: 0 auto;       /* ★完全中央寄せ */
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* =====================
+   Market Card
+===================== */
+
+.market-card {
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+
+/* 上昇・下降アクセント */
+.market-card.up {
+  border-left: 4px solid #22c55e;
+}
+
+.market-card.down {
+  border-left: 4px solid #ef4444;
+}
+
+/* =====================
+   Card Header
+===================== */
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+}
+
+.rank {
+  font-size: 16px;
+}
+
+.trend {
+  font-size: 13px;
+}
+
+.trend.up {
+  color: #22c55e;
+}
+
+.trend.down {
+  color: #ef4444;
+}
+
+/* AI PICK badge */
+.ai-pick {
+  margin-left: 8px;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #f97316, #ef4444);
+  color: #ffffff;
+}
+
+/* =====================
+   Price Row
+===================== */
+
+.price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.price-row .current {
+  opacity: 0.6;
+  font-size: 14px;
+}
+
+.price-row .arrow {
+  opacity: 0.5;
+}
+
+.price-row .target {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+/* =====================
+   Price Change
+===================== */
+
+.price-change {
+  margin-top: 6px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.price-change.up {
+  color: #22c55e;
+}
+
+.price-change.down {
+  color: #ef4444;
+}
+
+/* =====================
+   Mini Chart
+===================== */
+
+.mini-chart {
+  height: 60px;
+  margin: 10px 0 6px;
+}
+
+.mini-chart svg {
+  display: block;
+  width: 100%;
+}
+
+/* =====================
+   Confidence
+===================== */
+
+.confidence-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 12px;
+}
+
+.confidence-bar {
+  flex: 1;
+  height: 6px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.confidence-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1, #22c55e);
+}
+
+/* =====================
+   Updated Time
+===================== */
+
+.updated {
+  margin-top: 10px;
+  font-size: 10px;
+  text-align: center;
+  opacity: 0.5;
+}
+
+.last-updated {
+  margin-top: 12px;
+  font-size: 14px;
+  color: #9ca3af; /* 少し薄いグレー */
+  text-align: right;
+}
