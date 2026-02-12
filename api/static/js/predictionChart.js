@@ -25,7 +25,6 @@ function formatTime(ts, interval) {
 
 function generateXTicks(minTime, maxTime, chartWidth) {
 
-  // 1ラベルあたり最低80px確保
   const approxLabelWidth = 80;
 
   const maxLabels = Math.max(
@@ -62,10 +61,10 @@ function renderPredictionChart({ chart, diff, interval = "1h", mode = "full" }) 
 
   const isMini = mode === "mini";
 
-  // 🔥 レスポンシブ幅（スマホ対応）
+  // 🔥 幅を固定（開発者モードと完全一致）
   const width = isMini
     ? 330
-    : Math.min(window.innerWidth - 40, 720);
+    : 720;
 
   const height = isMini ? 60 : 200;
 
