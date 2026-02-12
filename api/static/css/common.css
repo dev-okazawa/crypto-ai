@@ -190,4 +190,11 @@ body {
   font-weight: 600;
 }
 
+.cg-zero {
+  font-size: 0.65em;
+  vertical-align: baseline;
+  position: relative;
+  top: 0.25em;
+  opacity: 0.8;
+}
 

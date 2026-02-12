@@ -1,34 +1,54 @@
 // =========================
 // Utils
 // =========================
+
+// 🔥 CoinGecko式フォーマット
 function formatUSD(price) {
   const n = Number(price);
-  if (!Number.isFinite(n)) return "—";
+  if (!Number.isFinite(n)) return "USD —";
 
-  if (n >= 1) {
-    return "USD " + n.toLocaleString(undefined, {
+  const abs = Math.abs(n);
+  const sign = n < 0 ? "-" : "";
+
+  // 1以上
+  if (abs >= 1) {
+    return sign + "USD " + abs.toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     });
   }
-  if (n >= 0.01) {
-    return "USD " + n.toLocaleString(undefined, {
+
+  // 0.01以上
+  if (abs >= 0.01) {
+    return sign + "USD " + abs.toLocaleString(undefined, {
       minimumFractionDigits: 4,
       maximumFractionDigits: 4
     });
   }
-  return "USD " + n.toLocaleString(undefined, {
-    minimumFractionDigits: 6,
-    maximumFractionDigits: 6
-  });
+
+  // 🔥 超少額（安全処理）
+  const str = abs.toFixed(18);
+
+  if (!str.includes(".")) {
+    return sign + "USD " + str;
+  }
+
+  const decimal = str.split(".")[1] || "";
+  const zeroMatch = decimal.match(/^0+/);
+  const zeroCount = zeroMatch ? zeroMatch[0].length : 0;
+
+  const significant = decimal.slice(zeroCount, zeroCount + 4) || "0000";
+
+  return sign + `USD 0.0<sub class="cg-zero">${zeroCount}</sub>${significant}`;
 }
 
 function formatDiff(diff, pct) {
   const sign = diff > 0 ? "+" : diff < 0 ? "-" : "";
-  return `${sign}${formatUSD(Math.abs(diff))} (${sign}${pct.toFixed(2)}%)`;
+  const abs = Math.abs(diff);
+
+  return `${sign}${formatUSD(abs)} (${sign}${pct.toFixed(2)}%)`;
 }
 
-// ✅ 正式週足対応
 function parseTimeframe(tf) {
   if (tf === "1h") return { interval: "1h", horizon: 1 };
   if (tf === "1d") return { interval: "1d", horizon: 1 };
@@ -98,7 +118,7 @@ async function loadSymbols({ keepSymbol = true } = {}) {
 }
 
 // =========================
-// Snapshot Chart（🔥完全timestamp連動）
+// Snapshot Chart
 // =========================
 function renderSnapshotFromPrediction(payload) {
   const container = document.getElementById("snapshotContainer");
@@ -284,4 +304,3 @@ document.getElementById("symbolSearch")
 
     renderSymbolOptions(filtered);
   });
-
