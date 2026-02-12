@@ -1,6 +1,6 @@
 body {
   font-family: Arial, Helvetica, sans-serif;
-  background: #0f172a;
+  background: #020617;
   color: #e5e7eb;
   margin: 0;
   padding: 12px;
@@ -12,15 +12,17 @@ body {
 }
 
 .card {
+  margin-top:60px;
   background: #020617;
-  padding: 24px;
-  border-radius: 12px;
+  padding: 0 24px;
+  /*border-radius: 12px;*/
   box-shadow: 0 10px 30px rgba(0,0,0,0.4);
 }
 
-h1 {
-  margin-top: 0;
+h1.content_name {
+  margin-top: 60px;
   text-align: center;
+  font-size:24px;
 }
 
 select, button {
@@ -38,10 +40,6 @@ button {
   color: white;
   font-weight: bold;
   cursor: pointer;
-}
-
-button:hover {
-  background: #1d4ed8;
 }
 
 .result {
@@ -288,4 +286,48 @@ button:hover {
   text-align: right;
   white-space: nowrap;
 }
+
+/* =========================
+   Footer
+========================= */
+
+.site-footer {
+  padding: 24px 0;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  text-align: center;
+  font-size: 13px;
+  opacity: 0.9;
+  background:#020617;
+  max-width: 420px;
+  margin:0 auto;
+}
+
+.footer-links {
+  margin-bottom: 12px;
+}
+
+.footer-links a {
+  color: #9fb3ff;
+  text-decoration: none;
+  margin: 0 10px;
+  font-weight: 500;
+}
+
+.footer-links a:hover {
+  text-decoration: underline;
+  opacity: 1;
+}
+
+.footer-disclaimer {
+  font-size: 12px;
+  opacity: 0.6;
+  margin-bottom: 8px;
+}
+
+.footer-copy {
+  font-size: 11px;
+  opacity: 0.5;
+}
+
+
 

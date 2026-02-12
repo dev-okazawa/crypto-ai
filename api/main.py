@@ -105,7 +105,75 @@ def visualize(request: Request):
 
 
 # =====================
-# Prediction API（正式構造）
+# 🆕 Legal / Info Pages
+# =====================
+
+@app.get("/about", response_class=HTMLResponse)
+def about(request: Request):
+    return templates.TemplateResponse(
+        "about.html",
+        {
+            "request": request,
+            **seo_context(
+                title="About | Crypto AI Prediction",
+                description="About Crypto AI Prediction platform",
+                keywords="about crypto ai prediction",
+                canonical="https://cryptoaipredict.com/about",
+            ),
+        },
+    )
+
+
+@app.get("/privacy", response_class=HTMLResponse)
+def privacy(request: Request):
+    return templates.TemplateResponse(
+        "privacy.html",
+        {
+            "request": request,
+            **seo_context(
+                title="Privacy Policy | Crypto AI Prediction",
+                description="Privacy policy for Crypto AI Prediction",
+                keywords="privacy policy crypto ai",
+                canonical="https://cryptoaipredict.com/privacy",
+            ),
+        },
+    )
+
+
+@app.get("/terms", response_class=HTMLResponse)
+def terms(request: Request):
+    return templates.TemplateResponse(
+        "terms.html",
+        {
+            "request": request,
+            **seo_context(
+                title="Terms of Service | Crypto AI Prediction",
+                description="Terms of service for Crypto AI Prediction",
+                keywords="terms crypto ai",
+                canonical="https://cryptoaipredict.com/terms",
+            ),
+        },
+    )
+
+
+@app.get("/contact", response_class=HTMLResponse)
+def contact(request: Request):
+    return templates.TemplateResponse(
+        "contact.html",
+        {
+            "request": request,
+            **seo_context(
+                title="Contact | Crypto AI Prediction",
+                description="Contact Crypto AI Prediction",
+                keywords="contact crypto ai",
+                canonical="https://cryptoaipredict.com/contact",
+            ),
+        },
+    )
+
+
+# =====================
+# Prediction API
 # =====================
 
 @app.get("/predict")
@@ -189,7 +257,7 @@ def api_market_overview(limit: int = 10):
 
 
 # =====================
-# Stats API（SAFE / SINGLE）
+# Stats API
 # =====================
 
 @app.get("/api/stats")

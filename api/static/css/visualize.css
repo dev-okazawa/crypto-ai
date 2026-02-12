@@ -1,54 +1,3 @@
-/* =====================
-   Reset & Base
-===================== */
-
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont;
-  background: #020617;
-  color: #e5e7eb;
-}
-
-/* =====================
-   Header
-===================== */
-
-.top {
-  max-width: 420px;
-  margin: 0 auto;
-  padding: 20px 16px 12px;
-}
-
-.top h1 {
-    margin: 6px 0 0;
-    font-size: 2em;
-    text-align: center;
-}
-
-.sub {
-  margin-top: 4px;
-  font-size: 13px;
-  opacity: 0.6;
-}
-
-/* =====================
-   Back Link
-===================== */
-
-.back-link {
-  display: inline-block;
-  font-size: 14px;
-  color: #9ca3af;
-  text-decoration: none;
-}
-
-.back-link:hover {
-  color: #ffffff;
-}
 
 /* =====================
    Market Overview Container
@@ -62,6 +11,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  background:#020617;
 }
 
 /* =====================
@@ -221,4 +171,5 @@ body {
   font-size: 14px;
   color: #9ca3af; /* 少し薄いグレー */
   text-align: right;
+  padding: 0 16px;
 }

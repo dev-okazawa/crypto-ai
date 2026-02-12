@@ -1,123 +1,83 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
+{% extends "base.html" %}
 
-  <title>{{ title }}</title>
+{% block content %}
 
-  {% include "partials/seo.html" %}
-  <link rel="stylesheet" href="/static/style.css">
-  
-  <!-- Google Tag Manager -->
-<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-MZMCL58Z');</script>
-<!-- End Google Tag Manager -->
+<div class="container">
+  <div class="card">
 
-</head>
-<body>
+    <h1 class="content_name">Crypto AI Prediction</h1>
 
-  <!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MZMCL58Z"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-<!-- End Google Tag Manager (noscript) -->
- 
-  <div class="container">
-    <div class="card">
-      <h1>Crypto AI Prediction</h1>
+    <!-- Market Ranking -->
+    <a href="/visualize" class="nav-button">
+      📈 View Market Ranking
+    </a>
 
-      <!-- Market Ranking -->
-      <a href="/visualize" class="nav-button">
-        📈 View Market Ranking
-      </a>
+    <!-- Symbol search -->
+    <label for="symbolSearch">Search Symbol</label>
+    <input
+      type="text"
+      id="symbolSearch"
+      placeholder="e.g. BTC, ETH, SOL"
+      autocomplete="off"
+    />
 
-      <!-- Symbol search -->
-      <label for="symbolSearch">Search Symbol</label>
-      <input
-        type="text"
-        id="symbolSearch"
-        placeholder="e.g. BTC, ETH, SOL"
-        autocomplete="off"
-      />
+    <!-- Symbol selector -->
+    <label for="symbol">Symbol</label>
+    <select id="symbol"></select>
 
-      <!-- Symbol selector -->
-      <label for="symbol">Symbol</label>
-      <select id="symbol"></select>
+    <!-- Timeframe -->
+    <label for="timeframe">Prediction Timeframe</label>
+    <select id="timeframe">
+      <option value="1h">1 Hour (Short-term)</option>
+      <option value="1d">1 Day (Daily)</option>
+      <option value="1w">1 Week (7 Days)</option>
+    </select>
 
-      <!-- Timeframe -->
-      <label for="timeframe">Prediction Timeframe</label>
-      <select id="timeframe">
-        <option value="1h">1 Hour (Short-term)</option>
-        <option value="1d">1 Day (Daily)</option>
-        <option value="1w">1 Week (7 Days)</option>
-      </select>
+    <!-- Action -->
+    <button id="predictBtn">Get Prediction</button>
 
-      <!-- Action -->
-      <button id="predictBtn">Get Prediction</button>
-
-      <!-- Prediction Result -->
-      <div id="result" class="result">
-        <div class="result-row">
-          <span class="result-label">Current Price (Model)</span>
-          <span id="curPrice">—</span>
-        </div>
-
-        <div class="result-row">
-          <span class="result-label">Predicted Price</span>
-          <span id="predPrice">—</span>
-        </div>
-
-        <div class="result-row">
-          <span class="result-label">Price Change</span>
-          <span id="priceChange">—</span>
-        </div>
-
-        <div class="result-row confidence-row">
-          <span class="result-label">Confidence</span>
-          <div class="confidence-bar">
-            <div class="confidence-fill" id="confidenceFill"></div>
-          </div>
-          <span id="confidenceText">—</span>
-        </div>
-
-        <div class="result-row">
-          <span class="result-label">Last Updated (UTC)</span>
-          <span id="updatedAt">—</span>
-        </div>
+    <!-- Prediction Result -->
+    <div id="result" class="result">
+      <div class="result-row">
+        <span class="result-label">Current Price (Model)</span>
+        <span id="curPrice">—</span>
       </div>
 
-      <!-- Prediction Chart -->
-      <div class="market-snapshot">
-        <h2 class="snapshot-title">Prediction Chart</h2>
-        <div id="snapshotContainer" class="prediction-chart mini">
-          <p style="opacity:.6">
-            Select a symbol and run prediction
-          </p>
-        </div>
+      <div class="result-row">
+        <span class="result-label">Predicted Price</span>
+        <span id="predPrice">—</span>
       </div>
 
-      <!-- Footer -->
-      <div class="footer">
-        Not financial advice · AI-based prediction<br />
-        <small>Predictions auto-refresh every 60 seconds</small>
+      <div class="result-row">
+        <span class="result-label">Price Change</span>
+        <span id="priceChange">—</span>
+      </div>
+
+      <div class="result-row confidence-row">
+        <span class="result-label">Confidence</span>
+        <div class="confidence-bar">
+          <div class="confidence-fill" id="confidenceFill"></div>
+        </div>
+        <span id="confidenceText">—</span>
+      </div>
+
+      <div class="result-row">
+        <span class="result-label">Last Updated (UTC)</span>
+        <span id="updatedAt">—</span>
       </div>
     </div>
+
+    <!-- ⭐ Prediction Chart (market-snapshot) -->
+    <div class="market-snapshot">
+      <h2 class="snapshot-title">Prediction Chart</h2>
+      <div id="snapshotContainer" class="prediction-chart mini">
+        <p style="opacity:.6">
+          Select a symbol and run prediction
+        </p>
+      </div>
+    </div>
+
   </div>
+</div>
 
-  <script>
-    fetch("/api/stats")
-      .then(res => res.json())
-      .then(data => {
-        document.getElementById("trainedCount").textContent = data.trained;
-      })
-      .catch(() => {
-        document.getElementById("trainedCount").textContent = "—";
-      });
-  </script>
-
-  <script src="/static/predictionChart.js"></script>
-  <script src="/static/app.js"></script>
-</body>
-</html>
+{% endblock %}

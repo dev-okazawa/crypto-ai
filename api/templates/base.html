@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>{{ title }}</title>
+
+  {% include "partials/seo.html" %}
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/common.css">
+
+  <!-- Google Tag Manager -->
+  <script>
+    (function(w,d,s,l,i){
+      w[l]=w[l]||[];
+      w[l].push({'gtm.start': new Date().getTime(),event:'gtm.js'});
+      var f=d.getElementsByTagName(s)[0],
+      j=d.createElement(s),
+      dl=l!='dataLayer'?'&l='+l:'';
+      j.async=true;
+      j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
+      f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-MZMCL58Z');
+  </script>
+</head>
+
+<body>
+
+  <noscript>
+    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MZMCL58Z"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe>
+  </noscript>
+
+  <div class="app-wrapper">
+
+    {% include "partials/header.html" %}
+
+    {% block content %}
+    {% endblock %}
+
+    {% include "partials/footer.html" %}
+
+  </div>
+
+  <script src="/static/js/predictionChart.js"></script>
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/common.js"></script>
+
+</body>
+</html>

@@ -6,3 +6,5 @@ logs/
 cache/
 Miniconda*.sh
 
+__pycache__/
+*.pyc

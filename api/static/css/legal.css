@@ -1,0 +1,47 @@
+.legal-container {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 40px 20px 60px;
+  background:#020617;
+}
+
+h1 {
+  font-size: 26px;
+  margin-bottom: 24px;
+}
+
+h2 {
+  font-size: 18px;
+  margin-top: 28px;
+  margin-bottom: 10px;
+}
+
+p {
+  font-size: 14px;
+  line-height: 1.6;
+  opacity: 0.9;
+}
+
+.contact-email {
+  font-weight: bold;
+  font-size: 16px;
+  margin: 20px 0;
+  color: #7aa2ff;
+}
+
+.back-link {
+  display: inline-block;
+  margin-top: 30px;
+  text-decoration: none;
+  color: #7aa2ff;
+  font-size: 14px;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+h1.content_legal {
+  text-align: center;
+  font-size:24px;
+}
