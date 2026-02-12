@@ -45,3 +45,28 @@ h1.content_legal {
   text-align: center;
   font-size:24px;
 }
+
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.contact-form input,
+.contact-form textarea {
+  padding: 10px;
+  border-radius: 6px;
+  border: none;
+  font-size: 14px;
+}
+
+.contact-form button {
+  padding: 12px;
+  border-radius: 6px;
+  border: none;
+  background: #2563eb;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}

@@ -7,19 +7,35 @@
 <div class="container">
   <div class="legal-container">
 
-    <h1 class="content_legal">Contact</h1>
+    <h1 class="content_legal">Contact Us</h1>
 
-    <p>
-      For inquiries, business partnerships, or support:
+    <p class="contact-intro">
+      If you have any questions, business inquiries, partnership proposals,
+      or feedback regarding Crypto AI Prediction, please use the form below.
+      We aim to respond within 24–48 hours.
     </p>
 
-    <p class="contact-email">
-      contact@cryptoaipredict.com
-    </p>
+    <form method="POST" action="/contact" class="contact-form">
 
-    <p>
-      We aim to respond within 48 hours.
-    </p>
+      <label for="name">Full Name</label>
+      <input type="text" id="name" name="name" required>
+
+      <label for="email">Email Address</label>
+      <input type="email" id="email" name="email" required>
+
+      <label for="message">Your Message</label>
+      <textarea id="message" name="message" rows="6" required></textarea>
+
+      <button type="submit">Send Message</button>
+
+    </form>
+
+    <div class="contact-note">
+      <p>
+        Please do not include sensitive personal or financial information
+        in your message. This contact form is intended for general inquiries only.
+      </p>
+    </div>
 
   </div>
 </div>
