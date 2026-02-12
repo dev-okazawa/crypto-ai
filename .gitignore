@@ -8,3 +8,5 @@ Miniconda*.sh
 
 __pycache__/
 *.pyc
+
+cron

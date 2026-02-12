@@ -309,3 +309,53 @@ def api_stats():
             "overview_generated_at": overview_generated_at,
         },
     }
+
+
+# =====================
+# Sitemap
+# =====================
+
+from fastapi.responses import Response
+
+@app.get("/sitemap.xml", response_class=Response)
+def sitemap():
+
+    base_url = "https://cryptoaipredict.com"
+
+    urls = [
+        "",
+        "/visualize",
+        "/about",
+        "/privacy",
+        "/terms",
+        "/contact",
+    ]
+
+    xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
+    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+
+    for path in urls:
+        xml += "  <url>\n"
+        xml += f"    <loc>{base_url}{path}</loc>\n"
+        xml += "  </url>\n"
+
+    xml += "</urlset>"
+
+    return Response(content=xml, media_type="application/xml")
+
+
+# =====================
+# Robots.txt
+# =====================
+
+@app.get("/robots.txt", response_class=Response)
+def robots():
+
+    content = """User-agent: *
+Allow: /
+
+Sitemap: https://cryptoaipredict.com/sitemap.xml
+"""
+
+    return Response(content=content, media_type="text/plain")
+
