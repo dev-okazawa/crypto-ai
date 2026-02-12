@@ -1,4 +1,3 @@
-# ai/jobs/auto_train.py
 """
 Cron / CLI entry point for daily full training.
 

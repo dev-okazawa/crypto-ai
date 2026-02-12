@@ -31,25 +31,26 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 BINANCE_INTERVAL_MAP = {
     "1h": "1h",
     "1d": "1d",
-    "1w": "1w",   # ✅ 追加
+    "1w": "1w",
 }
 
 INTERVAL_DELTA = {
     "1h": timedelta(hours=1),
     "1d": timedelta(days=1),
-    "1w": timedelta(weeks=1),  # ✅ 追加
+    "1w": timedelta(weeks=1),
 }
 
 # =====================
 # Binance API
 # =====================
-def fetch_klines(symbol, interval, start_time=None, limit=100):
+def fetch_klines(symbol, interval, start_time=None, limit=1000):
     url = "https://api.binance.com/api/v3/klines"
     params = {
         "symbol": symbol,
         "interval": BINANCE_INTERVAL_MAP[interval],
         "limit": limit,
     }
+
     if start_time:
         params["startTime"] = int(start_time.timestamp() * 1000)
 
@@ -68,7 +69,6 @@ def fetch_one(symbol: str):
         df_old = pd.read_csv(path)
         last_open = str(df_old.iloc[-1]["open_time"])
 
-        # ★ interval ごとに parse を切り替え
         if INTERVAL in ("1d", "1w"):
             last_time = datetime.strptime(last_open, "%Y-%m-%d")
         else:
@@ -80,7 +80,12 @@ def fetch_one(symbol: str):
         start_time = None
 
     # ---- fetch ----
-    klines = fetch_klines(symbol, INTERVAL, start_time=start_time)
+    if df_old is None:
+        # 初回は直近1000本取得
+        klines = fetch_klines(symbol, INTERVAL, start_time=None, limit=1000)
+    else:
+        klines = fetch_klines(symbol, INTERVAL, start_time=start_time, limit=1000)
+
     if not klines:
         print(f"[SKIP] {symbol}: no new klines", flush=True)
         return
@@ -90,7 +95,6 @@ def fetch_one(symbol: str):
     for k in klines:
         ts = datetime.utcfromtimestamp(k[0] / 1000)
 
-        # ★ CSV の open_time 表記も interval で分岐
         if INTERVAL in ("1d", "1w"):
             open_time = ts.strftime("%Y-%m-%d")
         else:

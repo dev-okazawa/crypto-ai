@@ -1,6 +1,5 @@
 from pathlib import Path
 
-from ai.src.fetch_data import fetch_symbol
 from ai.src.train_price import train_price_model
 from ai.src.train_direction import train_direction_model
 from ai.src.market_cap import load_trained_symbols
@@ -31,7 +30,7 @@ HORIZONS = [1]
 def train_symbol_all(symbol: str):
     print(f"[TRAIN] {symbol}")
 
-    fetch_symbol(symbol)
+    # fetch は cron 側で実行される設計なのでここでは呼ばない
 
     for interval in INTERVALS:
         for h in HORIZONS:
@@ -45,7 +44,7 @@ def train_symbol_all(symbol: str):
 
 
 # =====================
-# Entry Point（←ここは外側！）
+# Entry Point
 # =====================
 
 if __name__ == "__main__":
