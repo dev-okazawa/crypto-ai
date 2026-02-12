@@ -44,6 +44,7 @@ p {
 h1.content_legal {
   text-align: center;
   font-size:24px;
+  margin: 24px 0;
 }
 
 .contact-form {
