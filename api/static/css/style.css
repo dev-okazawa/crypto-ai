@@ -97,7 +97,7 @@ button {
   height: 100%;
   width: 0%;
   background: #38bdf8;
-  transition: width 0.4s ease, background 0.3s ease;
+  transition: width 0.4s ease;
 }
 
 .footer {
@@ -288,6 +288,21 @@ button {
   white-space: nowrap;
 }
 
+.accuracy-bar {
+  width: 120px;
+  height: 8px;
+  background: #222;
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 0 8px;
+}
+
+.accuracy-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff4d4f, #faad14, #52c41a);
+  width: 0%;
+  transition: width 0.4s ease;
+}
 
 
 

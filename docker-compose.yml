@@ -1,0 +1,51 @@
+services:
+
+  api:
+    build: .
+    container_name: crypto-ai-api
+    restart: always
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      - mysql
+    volumes:
+      - ./logs:/app/logs
+      - ./ai/data:/app/ai/data
+
+  cron:
+    build: .
+    container_name: crypto-ai-cron
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      - mysql
+    volumes:
+      - ./logs:/app/logs
+      - ./ai/data:/app/ai/data
+      - ./cron/crontab:/etc/cron.d/crypto-cron
+    command: >
+      bash -c "
+      chmod 0644 /etc/cron.d/crypto-cron &&
+      crontab /etc/cron.d/crypto-cron &&
+      cron -f
+      "
+
+  mysql:
+    image: mysql:8
+    container_name: crypto-mysql
+    restart: always
+    env_file:
+      - .env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:

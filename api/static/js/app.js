@@ -2,7 +2,6 @@
 // Utils
 // =========================
 
-// 🔥 CoinGecko式フォーマット
 function formatUSD(price) {
   const n = Number(price);
   if (!Number.isFinite(n)) return "USD —";
@@ -10,7 +9,6 @@ function formatUSD(price) {
   const abs = Math.abs(n);
   const sign = n < 0 ? "-" : "";
 
-  // 1以上
   if (abs >= 1) {
     return sign + "USD " + abs.toLocaleString(undefined, {
       minimumFractionDigits: 2,
@@ -18,7 +16,6 @@ function formatUSD(price) {
     });
   }
 
-  // 0.01以上
   if (abs >= 0.01) {
     return sign + "USD " + abs.toLocaleString(undefined, {
       minimumFractionDigits: 4,
@@ -26,17 +23,12 @@ function formatUSD(price) {
     });
   }
 
-  // 🔥 超少額（安全処理）
   const str = abs.toFixed(18);
-
-  if (!str.includes(".")) {
-    return sign + "USD " + str;
-  }
+  if (!str.includes(".")) return sign + "USD " + str;
 
   const decimal = str.split(".")[1] || "";
   const zeroMatch = decimal.match(/^0+/);
   const zeroCount = zeroMatch ? zeroMatch[0].length : 0;
-
   const significant = decimal.slice(zeroCount, zeroCount + 4) || "0000";
 
   return sign + `USD 0.0<sub class="cg-zero">${zeroCount}</sub>${significant}`;
@@ -44,9 +36,10 @@ function formatUSD(price) {
 
 function formatDiff(diff, pct) {
   const sign = diff > 0 ? "+" : diff < 0 ? "-" : "";
-  const abs = Math.abs(diff);
+  const diffAbs = Math.abs(diff);
+  const pctAbs = Math.abs(pct);
 
-  return `${sign}${formatUSD(abs)} (${sign}${pct.toFixed(2)}%)`;
+  return `${sign}${formatUSD(diffAbs)} (${sign}${pctAbs.toFixed(2)}%)`;
 }
 
 function parseTimeframe(tf) {
@@ -73,6 +66,8 @@ let CURRENT_SYMBOL = null;
 // =========================
 function renderSymbolOptions(list) {
   const select = document.getElementById("symbol");
+  if (!select) return;
+
   select.innerHTML = "";
 
   list.forEach(c => {
@@ -97,8 +92,12 @@ function renderSymbolOptions(list) {
 // =========================
 async function loadSymbols({ keepSymbol = true } = {}) {
   try {
-    const tf = document.getElementById("timeframe").value;
+    const timeframeEl = document.getElementById("timeframe");
+    if (!timeframeEl) return;
+
+    const tf = timeframeEl.value;
     const { interval } = parseTimeframe(tf);
+
     const prev = keepSymbol ? CURRENT_SYMBOL : null;
 
     const res = await fetch(`/symbols?interval=${interval}`);
@@ -133,6 +132,11 @@ function renderSnapshotFromPrediction(payload) {
     return;
   }
 
+  if (typeof renderPredictionChart !== "function") {
+    console.warn("renderPredictionChart not found");
+    return;
+  }
+
   container.innerHTML = renderPredictionChart({
     chart: payload.chart,
     diff: payload.metrics.diff,
@@ -148,12 +152,17 @@ async function loadPrediction({ silent = false } = {}) {
 
   const resultEl = document.getElementById("result");
   const snapshotContainer = document.getElementById("snapshotContainer");
-  const symbol = document.getElementById("symbol").value;
+  const symbolEl = document.getElementById("symbol");
+  const timeframeEl = document.getElementById("timeframe");
+
+  if (!resultEl || !symbolEl || !timeframeEl) return;
+
+  const symbol = symbolEl.value;
   if (!symbol) return;
 
   CURRENT_SYMBOL = symbol;
 
-  const tf = document.getElementById("timeframe").value;
+  const tf = timeframeEl.value;
   const { interval, horizon } = parseTimeframe(tf);
 
   if (!silent) resultEl.textContent = "Loading...";
@@ -167,12 +176,7 @@ async function loadPrediction({ silent = false } = {}) {
     if (!res.ok) throw new Error("Prediction API error");
 
     const response = await res.json();
-
-    if (!response || !response.data) {
-      resultEl.textContent = "No data";
-      if (snapshotContainer) snapshotContainer.innerHTML = "";
-      return;
-    }
+    if (!response || !response.data) throw new Error("No data");
 
     const payload = response.data;
 
@@ -197,7 +201,6 @@ async function loadPrediction({ silent = false } = {}) {
 
     if (!Number.isFinite(current) || !Number.isFinite(predicted)) {
       resultEl.textContent = "No data";
-      if (snapshotContainer) snapshotContainer.innerHTML = "";
       return;
     }
 
@@ -207,46 +210,62 @@ async function loadPrediction({ silent = false } = {}) {
       "flat";
 
     resultEl.innerHTML = `
-      <div class="result-row">
-        <span class="result-label">Model Base Price</span>
-        <span>${formatUSD(current)}</span>
-      </div>
+       <div class="result-row">
+           <span class="result-label">Model Base Price</span>
+           <span>${formatUSD(current)}</span>
+         </div>
 
-      <div class="result-row">
-        <span class="result-label">Predicted Price</span>
-        <span>${formatUSD(predicted)}</span>
-      </div>
+         <div class="result-row">
+           <span class="result-label">Predicted Price</span>
+           <span>${formatUSD(predicted)}</span>
+         </div>
 
-      <div class="result-row">
-        <span class="result-label">Price Change</span>
-        <span class="direction ${priceClass}">
-          ${formatDiff(diff, pct_change)}
-        </span>
-      </div>
+         <div class="result-row">
+           <span class="result-label">Price Change</span>
+           <span class="direction ${priceClass}">
+             ${formatDiff(diff, pct_change)}
+           </span>
+         </div>
 
-      <div class="result-row">
-        <span class="result-label">AI Market Bias</span>
-        <span class="direction ${priceClass}">
-          ${getBiasLabel(payload.trend)}
-        </span>
-      </div>
+         <div class="result-row">
+           <span class="result-label">AI Market Bias</span>
+           <span class="direction ${priceClass}">
+             ${getBiasLabel(payload.trend)}
+           </span>
+         </div>
 
-      <div class="result-row confidence-row">
-        <span class="result-label">Confidence</span>
-        <div class="confidence-bar">
-          <div class="confidence-fill"
-               style="width:${Number(payload.confidence) || 0}%"></div>
+         <div class="result-row confidence-row">
+           <span class="result-label">Confidence</span>
+           <div class="confidence-bar">
+             <div class="confidence-fill"
+                  style="width:${Number(payload.confidence) || 0}%"></div>
+           </div>
+           <span>${Number(payload.confidence) || 0}%</span>
+         </div>
+
+         <!-- ⭐ Accuracyここに入れる -->
+         <div class="result-row accuracy-row">
+           <span class="result-label">Model Accuracy</span>
+           <div class="accuracy-bar">
+             <div id="accuracyFill" class="accuracy-fill"></div>
+           </div>
+           <span id="accuracyText">--%</span>
+         </div>       
+
+         <div class="result-row">
+           <span class="result-label">MAE</span>
+           <span id="maeText">--%</span>
+         </div>
+
+        <div class="result-row">
+           <span class="result-label">Last Updated (UTC)</span>
+           <span>${current_price_at || "—"}</span>
         </div>
-        <span>${Number(payload.confidence) || 0}%</span>
-      </div>
-
-      <div class="result-row">
-        <span class="result-label">Last Updated (UTC)</span>
-        <span>${current_price_at || "—"}</span>
-      </div>
-    `;
+      `;
 
     renderSnapshotFromPrediction(payload);
+
+    loadAccuracy(interval);
 
   } catch (e) {
     console.error("Prediction error:", e);
@@ -256,51 +275,89 @@ async function loadPrediction({ silent = false } = {}) {
 }
 
 // =========================
-// Events & Init
+// Accuracy
 // =========================
-document.getElementById("predictBtn")
-  .addEventListener("click", () => loadPrediction());
 
-document.getElementById("symbol")
-  .addEventListener("change", () =>
-    loadPrediction({ silent: true })
-  );
+async function loadAccuracy(interval) {
 
-document.getElementById("timeframe")
-  .addEventListener("change", async () => {
-    await loadSymbols({ keepSymbol: true });
-    loadPrediction({ silent: true });
-  });
+  try {
+    const res = await fetch(`/accuracy?interval=${interval}`);
+    if (!res.ok) return;
 
-window.addEventListener("DOMContentLoaded", async () => {
-  await loadSymbols({ keepSymbol: false });
-  setTimeout(() => loadPrediction({ silent: true }), 300);
-});
+    const data = await res.json();
 
-// 1分ごと自動更新
-setInterval(() => {
-  if (document.visibilityState === "visible") {
-    loadPrediction({ silent: true });
-  }
-}, 60000);
+    const fill = document.getElementById("accuracyFill");
+    const text = document.getElementById("accuracyText");
+    const maeText = document.getElementById("maeText");
 
-// =========================
-// Symbol Search
-// =========================
-document.getElementById("symbolSearch")
-  .addEventListener("input", function () {
-
-    const keyword = this.value.trim().toUpperCase();
-
-    if (!keyword) {
-      renderSymbolOptions(ALL_SYMBOLS);
+    if (!data || data.accuracy === null) {
+      fill.style.width = "0%";
+      text.textContent = "Evaluating...";
+      if (maeText) maeText.textContent = "--";
       return;
     }
 
-    const filtered = ALL_SYMBOLS.filter(c =>
-      c.symbol.toUpperCase().includes(keyword) ||
-      (c.name && c.name.toUpperCase().includes(keyword))
+    fill.style.width = `${data.accuracy}%`;
+    text.textContent = `${data.accuracy}%`;
+
+    if (maeText && data.mae !== null) {
+      maeText.textContent = `${data.mae.toFixed(2)}%`;
+    }
+
+  } catch (e) {
+    console.error("Accuracy error:", e);
+  }
+}
+
+// =========================
+// Init (安全版)
+// =========================
+window.addEventListener("DOMContentLoaded", async () => {
+
+  const predictBtn = document.getElementById("predictBtn");
+  const symbol = document.getElementById("symbol");
+  const timeframe = document.getElementById("timeframe");
+  const symbolSearch = document.getElementById("symbolSearch");
+
+  if (predictBtn)
+    predictBtn.addEventListener("click", () => loadPrediction());
+
+  if (symbol)
+    symbol.addEventListener("change", () =>
+      loadPrediction({ silent: true })
     );
 
-    renderSymbolOptions(filtered);
-  });
+  if (timeframe)
+    timeframe.addEventListener("change", async () => {
+      await loadSymbols({ keepSymbol: true });
+      loadPrediction({ silent: true });
+    });
+
+  if (symbolSearch)
+    symbolSearch.addEventListener("input", function () {
+      const keyword = this.value.trim().toUpperCase();
+
+      if (!keyword) {
+        renderSymbolOptions(ALL_SYMBOLS);
+        return;
+      }
+
+      const filtered = ALL_SYMBOLS.filter(c =>
+        c.symbol.toUpperCase().includes(keyword) ||
+        (c.name && c.name.toUpperCase().includes(keyword))
+      );
+
+      renderSymbolOptions(filtered);
+    });
+
+  await loadSymbols({ keepSymbol: false });
+  setTimeout(() => loadPrediction({ silent: true }), 300);
+
+  // 1分ごと更新
+  setInterval(() => {
+    if (document.visibilityState === "visible") {
+      loadPrediction({ silent: true });
+    }
+  }, 60000);
+
+});

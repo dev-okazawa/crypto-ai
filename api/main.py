@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 
 from fastapi import FastAPI, Query, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi.templating import Jinja2Templates
 
 from ai.src.predict import predict
@@ -77,11 +77,8 @@ def index(request: Request):
             "request": request,
             **seo_context(
                 title="Crypto AI Prediction",
-                description=(
-                    "Crypto AI Prediction is a web application that uses artificial "
-                    "intelligence to predict cryptocurrency prices."
-                ),
-                keywords="crypto ai prediction, bitcoin ai, crypto forecast",
+                description="Crypto AI Prediction platform",
+                keywords="crypto ai prediction",
                 canonical="https://cryptoaipredict.com/",
             ),
         },
@@ -97,30 +94,23 @@ def visualize(request: Request):
             **seo_context(
                 title="Market Overview | Crypto AI",
                 description="AI-powered crypto market overview",
-                keywords="crypto market ranking, ai crypto",
+                keywords="crypto market ranking",
                 canonical="https://cryptoaipredict.com/visualize",
             ),
         },
     )
 
 
-# =====================
-# 🆕 Legal / Info Pages
-# =====================
-
 @app.get("/about", response_class=HTMLResponse)
 def about(request: Request):
     return templates.TemplateResponse(
         "about.html",
-        {
-            "request": request,
-            **seo_context(
-                title="About | Crypto AI Prediction",
-                description="About Crypto AI Prediction platform",
-                keywords="about crypto ai prediction",
-                canonical="https://cryptoaipredict.com/about",
-            ),
-        },
+        {"request": request, **seo_context(
+            title="About",
+            description="About Crypto AI",
+            keywords="about",
+            canonical="https://cryptoaipredict.com/about",
+        )},
     )
 
 
@@ -128,15 +118,12 @@ def about(request: Request):
 def privacy(request: Request):
     return templates.TemplateResponse(
         "privacy.html",
-        {
-            "request": request,
-            **seo_context(
-                title="Privacy Policy | Crypto AI Prediction",
-                description="Privacy policy for Crypto AI Prediction",
-                keywords="privacy policy crypto ai",
-                canonical="https://cryptoaipredict.com/privacy",
-            ),
-        },
+        {"request": request, **seo_context(
+            title="Privacy Policy",
+            description="Privacy Policy",
+            keywords="privacy",
+            canonical="https://cryptoaipredict.com/privacy",
+        )},
     )
 
 
@@ -144,15 +131,12 @@ def privacy(request: Request):
 def terms(request: Request):
     return templates.TemplateResponse(
         "terms.html",
-        {
-            "request": request,
-            **seo_context(
-                title="Terms of Service | Crypto AI Prediction",
-                description="Terms of service for Crypto AI Prediction",
-                keywords="terms crypto ai",
-                canonical="https://cryptoaipredict.com/terms",
-            ),
-        },
+        {"request": request, **seo_context(
+            title="Terms of Service",
+            description="Terms",
+            keywords="terms",
+            canonical="https://cryptoaipredict.com/terms",
+        )},
     )
 
 
@@ -160,15 +144,12 @@ def terms(request: Request):
 def contact(request: Request):
     return templates.TemplateResponse(
         "contact.html",
-        {
-            "request": request,
-            **seo_context(
-                title="Contact | Crypto AI Prediction",
-                description="Contact Crypto AI Prediction",
-                keywords="contact crypto ai",
-                canonical="https://cryptoaipredict.com/contact",
-            ),
-        },
+        {"request": request, **seo_context(
+            title="Contact",
+            description="Contact",
+            keywords="contact",
+            canonical="https://cryptoaipredict.com/contact",
+        )},
     )
 
 
@@ -229,24 +210,39 @@ def api_symbols(interval: str = "1h"):
 
 
 # =====================
-# Market Overview API
+# Market Overview API (interval対応)
 # =====================
 
 @app.get("/api/market-overview")
-def api_market_overview(limit: int = 10):
-    path = CACHE_DIR / "market_overview.json"
-
-    if not path.exists():
-        return JSONResponse(
-            status_code=503,
-            content={"error": "Market overview cache not ready"},
-        )
-
+def api_market_overview(
+    interval: str = Query("1h"),
+    limit: int = Query(10, ge=1, le=200),
+):
     try:
+        allowed = {"1h", "1d", "1w"}
+
+        if interval not in allowed:
+            return JSONResponse(
+                status_code=400,
+                content={"error": "invalid interval"},
+            )
+
+        path = CACHE_DIR / f"market_overview_{interval}.json"
+
+        if not path.exists():
+            return JSONResponse(
+                status_code=503,
+                content={"error": f"{interval} cache not ready"},
+            )
+
         data = json.loads(path.read_text())
+
         return {
             "items": data.get("items", [])[:limit],
-            "meta": data.get("meta", {}),
+            "meta": {
+                **data.get("meta", {}),
+                "interval": interval,
+            },
         }
 
     except Exception as e:
@@ -276,7 +272,7 @@ def api_stats():
     except Exception:
         trained_count = 0
 
-    overview_path = CACHE_DIR / "market_overview.json"
+    overview_path = CACHE_DIR / "market_overview_1h.json"
     overview_ready = 0
     overview_generated_at = None
 
@@ -314,8 +310,6 @@ def api_stats():
 # =====================
 # Sitemap
 # =====================
-
-from fastapi.responses import Response
 
 @app.get("/sitemap.xml", response_class=Response)
 def sitemap():
@@ -359,3 +353,75 @@ Sitemap: https://cryptoaipredict.com/sitemap.xml
 
     return Response(content=content, media_type="text/plain")
 
+
+
+# =====================
+# Accuracy API
+# =====================
+
+from ai.src.repository.db import get_connection
+
+
+@app.get("/accuracy")
+def get_accuracy(interval: str = Query(...)):
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    horizon_map = {
+        "1h": 3,
+        "1d": 1,
+        "1w": 1
+    }
+
+    horizon = horizon_map.get(interval, 3)
+
+    cur.execute("""
+        SELECT
+          SUM(
+            CASE
+              WHEN (predicted_price - base_price) *
+                   (actual_price - base_price) > 0
+              THEN 1 ELSE 0
+            END
+          ) AS wins,
+          COUNT(*) AS total,
+          AVG(ABS(predicted_price - actual_price) / base_price) * 100 AS mae
+        FROM predictions
+        WHERE evaluated = 1
+        AND timeframe = %s
+        AND horizon = %s
+    """, (interval, horizon))
+
+    row = cur.fetchone()
+
+    cur.close()
+    conn.close()
+
+    if not row:
+        return {
+            "status": "ok",
+            "accuracy": None,
+            "mae": None,
+            "total": 0
+        }
+
+    wins, total, mae = row
+
+    if not total:
+        return {
+            "status": "ok",
+            "accuracy": None,
+            "mae": None,
+            "total": 0
+        }
+
+    accuracy = round(wins / total * 100, 2)
+    mae = round(mae, 2) if mae is not None else None
+
+    return {
+        "status": "ok",
+        "accuracy": accuracy,
+        "mae": mae,
+        "total": total
+    }

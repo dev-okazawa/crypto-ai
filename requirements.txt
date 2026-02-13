@@ -10,19 +10,23 @@ idna==3.11
 Jinja2==3.1.6
 joblib==1.5.3
 MarkupSafe==3.0.3
+mysql-connector-python==9.6.0
 numpy==2.4.2
-packaging @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_packaging_1769093650/work
+packaging==26.0
 pandas==3.0.0
+pip==26.0.1
 pydantic==2.12.5
 pydantic_core==2.41.5
 python-dateutil==2.9.0.post0
 requests==2.32.5
 scikit-learn==1.8.0
 scipy==1.17.0
+setuptools==82.0.0
 six==1.17.0
 starlette==0.52.1
 threadpoolctl==3.6.0
-typing-inspection==0.4.2
 typing_extensions==4.15.0
+typing-inspection==0.4.2
 urllib3==2.6.3
 uvicorn==0.40.0
+wheel==0.46.3

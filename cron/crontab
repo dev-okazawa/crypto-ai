@@ -1,0 +1,48 @@
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+TZ=UTC
+
+# --------------------------------------------
+# CoinGecko cache (daily)
+# --------------------------------------------
+0 3 * * * python -m ai.src.cache_coingecko >> /app/logs/coingecko.log 2>&1
+
+# --------------------------------------------
+# Fetch 1h (every hour)
+# --------------------------------------------
+5 * * * * python -m ai.src.fetch_1h_top300 >> /app/logs/fetch_1h.log 2>&1
+
+# --------------------------------------------
+# Fetch 1d (daily)
+# --------------------------------------------
+0 4 * * * python -m ai.src.fetch_1d_top300 >> /app/logs/fetch_1d.log 2>&1
+
+# --------------------------------------------
+# Weekly fetch（毎日OKにするなら削除）
+# --------------------------------------------
+0 6 * * * python -m ai.src.fetch_weekly_all >> /app/logs/fetch_1w.log 2>&1
+
+# --------------------------------------------
+# Auto training (daily)
+# --------------------------------------------
+0 5 * * * python -m ai.src.train_all_auto 3 >> /app/logs/train.log 2>&1
+
+# --------------------------------------------
+# Prediction batch
+# --------------------------------------------
+*/10 * * * * python -m ai.src.predict_all 3 >> /app/logs/predict.log 2>&1
+
+# --------------------------------------------
+# Evaluation
+# --------------------------------------------
+*/10 * * * * python -m ai.src.batch_evaluate >> /app/logs/evaluate.log 2>&1
+
+# --------------------------------------------
+# Market overview
+# --------------------------------------------
+*/30 * * * * python -m ai.src.generate_market_overview >> /app/logs/overview.log 2>&1
+
+# --------------------------------------------
+# Cron health
+# --------------------------------------------
+*/5 * * * * echo "CRON OK $(date -u)" >> /app/logs/cron_health.log

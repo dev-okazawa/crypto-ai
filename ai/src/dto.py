@@ -8,10 +8,15 @@ DATA_DIR = BASE_DIR / "ai" / "data" / "raw"
 
 def load_price_history(symbol: str, interval: str, points: int = 30):
     path = DATA_DIR / f"{symbol}_{interval}.csv"
+
     if not path.exists():
         raise FileNotFoundError(f"CSV not found: {path}")
 
     df = pd.read_csv(path)
+
+    if df.empty:
+        raise ValueError("Not enough price history")
+
     prices = df["close"].astype(float).tolist()
 
     if len(prices) < 2:
@@ -20,47 +25,37 @@ def load_price_history(symbol: str, interval: str, points: int = 30):
     return prices[-points:]
 
 
-# 🔥 timestamp自動生成バージョン
 def build_candles_with_time(symbol: str, interval: str, points: int = 30):
+    """
+    CSVの open_time をそのまま使用し、
+    実ローソク足時間と完全一致させる版
+    """
+
     path = DATA_DIR / f"{symbol}_{interval}.csv"
 
     if not path.exists():
         raise FileNotFoundError(f"CSV not found: {path}")
 
     df = pd.read_csv(path)
+
+    if df.empty:
+        raise ValueError("CSV is empty")
+
     df = df.tail(points)
-
-    interval_map = {
-        "1h": 3600000,
-        "4h": 14400000,
-        "1d": 86400000,
-        "1w": 604800000,
-    }
-
-    step = interval_map.get(interval, 3600000)
-
-    now = int(datetime.now(timezone.utc).timestamp() * 1000)
 
     candles = []
 
-    for i, (_, row) in enumerate(df.iterrows()):
-        # 過去方向に生成
-        time_offset = step * (len(df) - i)
-        ts = now - time_offset
-
-        open_price = float(row.get("open", row["close"]))
-        high_price = float(row.get("high", row["close"]))
-        low_price = float(row.get("low", row["close"]))
-        close_price = float(row["close"])
-        volume = float(row.get("volume", 0))
+    for _, row in df.iterrows():
+        # open_time は ISO UTC 文字列
+        ts = int(pd.Timestamp(row["open_time"]).timestamp() * 1000)
 
         candles.append({
             "time": ts,
-            "open": open_price,
-            "high": high_price,
-            "low": low_price,
-            "close": close_price,
-            "volume": volume,
+            "open": float(row["open"]),
+            "high": float(row["high"]),
+            "low": float(row["low"]),
+            "close": float(row["close"]),
+            "volume": float(row["volume"]),
         })
 
     return candles
@@ -76,6 +71,7 @@ def build_prediction_dto(result: dict):
     current = result["current_price"]
     predicted = result["predicted_price"]
 
+    # 最新価格は現在値で上書き
     history[-1] = current
 
     diff = predicted - current
@@ -89,7 +85,6 @@ def build_prediction_dto(result: dict):
 
     current_price_at = result["current_price_at"]
 
-    # 🔥 chartデータ生成
     candles = build_candles_with_time(
         result["symbol"],
         result["interval"]
@@ -103,6 +98,7 @@ def build_prediction_dto(result: dict):
     }
 
     step = interval_map.get(result["interval"], 3600000)
+
     last_time = candles[-1]["time"]
     future_time = last_time + step
 

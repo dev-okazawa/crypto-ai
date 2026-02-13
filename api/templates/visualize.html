@@ -13,6 +13,27 @@
   </div>
 
   <div class="market-page">
+
+    <div class="mo-controls">
+
+  <input type="text"
+         id="moSearch"
+         placeholder="Search symbol...">
+
+  <select id="moInterval">
+    <option value="1h">1Hour (short-term)</option>
+    <option value="1d">1Day  (Daily)</option>
+    <option value="1w">1Week (7 Days)</option>
+  </select>
+
+  <div class="mo-toggle">
+    <button id="btnGainers">↑ Gainers</button>
+    <button id="btnLosers">↓ Losers</button>
+  </div>
+
+</div>
+
+
     <main class="swipe-container" id="swipeContainer"></main>
   </div>
 
@@ -24,5 +45,6 @@
 <!-- ページ専用JS -->
 <script src="/static/js/predictionChart.js"></script>
 <script src="/static/js/visualize.js"></script>
+
 
 {% endblock %}

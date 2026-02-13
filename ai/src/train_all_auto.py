@@ -1,56 +1,37 @@
-from pathlib import Path
+import sys
 
 from ai.src.train_price import train_price_model
 from ai.src.train_direction import train_direction_model
-from ai.src.market_cap import load_trained_symbols
-
-# =====================
-# Paths
-# =====================
-
-BASE_DIR = Path(__file__).resolve().parents[2]
-AI_DIR = BASE_DIR / "ai"
-
-STATE_DIR = AI_DIR / "state"
-TRAINED_DIR = STATE_DIR / "trained"
-
-TRAINED_DIR.mkdir(parents=True, exist_ok=True)
-
-# =====================
-# Config
-# =====================
+from ai.src.market_cap import get_supported
 
 INTERVALS = ["1h", "1d", "1w"]
-HORIZONS = [1]
+DEFAULT_HORIZON = 1
 
-# =====================
-# Train
-# =====================
 
-def train_symbol_all(symbol: str):
+def train_symbol_all(symbol: str, horizons):
     print(f"[TRAIN] {symbol}")
 
-    # fetch は cron 側で実行される設計なのでここでは呼ばない
-
     for interval in INTERVALS:
-        for h in HORIZONS:
+        for h in horizons:
+            print(f"  -> interval={interval} horizon={h}")
             train_price_model(symbol, interval, h)
             train_direction_model(symbol, interval, h)
-
-    trained_path = TRAINED_DIR / symbol
-    trained_path.mkdir(exist_ok=True)
 
     print(f"[TRAINED] {symbol}")
 
 
-# =====================
-# Entry Point
-# =====================
-
 if __name__ == "__main__":
-    symbols = sorted(load_trained_symbols())
 
-    print(f"[AUTO TRAIN] symbols={len(symbols)}")
+    if len(sys.argv) > 1:
+        horizons = [int(sys.argv[1])]
+    else:
+        horizons = [DEFAULT_HORIZON]
+
+    # 🔥 ここが最重要
+    symbols_data = get_supported("1h")
+    symbols = [s["symbol"] for s in symbols_data]
+
+    print(f"[AUTO TRAIN] symbols={len(symbols)} horizons={horizons}")
 
     for symbol in symbols:
-        train_symbol_all(symbol)
+        train_symbol_all(symbol, horizons)

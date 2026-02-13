@@ -1,101 +1,103 @@
-import os
-from pathlib import Path
-import joblib
-import pandas as pd
-
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report
+from sklearn.calibration import CalibratedClassifierCV
+import joblib
+import os
+import pandas as pd
+import numpy as np
 
-from ai.src.features import make_features, make_direction_target
-
-
-# =====================
-# Paths
-# =====================
-
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
-RAW_DIR = BASE_DIR / "ai" / "data" / "raw"
-MODEL_DIR = BASE_DIR / "ai" / "models"
-
-os.makedirs(MODEL_DIR, exist_ok=True)
+from ai.src.features import make_features
 
 
-# =====================
-# Train One
-# =====================
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+DATA_DIR = os.path.join(BASE_DIR, "ai", "data", "raw")
+MODEL_DIR = os.path.join(BASE_DIR, "ai", "models")
 
-def train_direction_model(symbol: str, interval: str, horizon: int = 1):
 
-    path = RAW_DIR / f"{symbol}_{interval}.csv"
+def load_csv(symbol, interval):
+    path = f"{DATA_DIR}/{symbol}_{interval}.csv"
+    if not os.path.exists(path):
+        return None
+    return pd.read_csv(path)
 
-    if not path.exists():
-        print(f"[SKIP] {symbol} {interval} (CSV not found)")
+
+def train_direction_model(symbol: str, interval: str, horizon: int):
+
+    df = load_csv(symbol, interval)
+    if df is None:
+        print(f"[SKIP] {symbol} {interval} (no csv)")
         return
 
-    df = pd.read_csv(path)
-
-    # === features ===
     df_feat = make_features(df)
 
-    # === target ===
-    df_feat["target"] = make_direction_target(df_feat, horizon=horizon)
-
-    df_feat = df_feat.dropna()
-
-    # 最低本数チェック
-    if len(df_feat) < 150:
+    if len(df_feat) <= horizon + 50:
         print(f"[SKIP] {symbol} {interval} (data too small: {len(df_feat)})")
         return
 
+    # ==========================
+    # ターゲット作成
+    # ==========================
+    df_feat["future_price"] = df_feat["close"].shift(-horizon)
+
+    df_feat["direction"] = 0
+    df_feat.loc[
+        df_feat["future_price"] > df_feat["close"], "direction"
+    ] = 1
+    df_feat.loc[
+        df_feat["future_price"] < df_feat["close"], "direction"
+    ] = -1
+
+    df_feat = df_feat.dropna()
+
     feature_cols = [
         col for col in df_feat.columns
-        if col not in ["target", "open_time"]
+        if col not in ["open_time", "future_price", "direction"]
     ]
 
     X = df_feat[feature_cols]
-    y = df_feat["target"]
+    y = df_feat["direction"]
 
-    # クラスが1種類しかない場合は学習不可
-    if len(y.unique()) < 2:
+    # ==========================
+    # クラス分布チェック
+    # ==========================
+    class_counts = y.value_counts()
+    min_class_samples = class_counts.min()
+
+    if len(class_counts) < 2:
         print(f"[SKIP] {symbol} {interval} (only one class)")
         return
 
-    model = RandomForestClassifier(
+    if min_class_samples < 2:
+        print(f"[SKIP] {symbol} {interval} (too few samples per class)")
+        return
+
+    # cvはクラス最小数以下にする
+    cv_folds = min(3, min_class_samples)
+
+    # ==========================
+    # モデル
+    # ==========================
+    base_model = RandomForestClassifier(
         n_estimators=300,
-        max_depth=6,
+        max_depth=8,
         random_state=42,
         n_jobs=-1
     )
 
-    model.fit(X, y)
+    calibrated_model = CalibratedClassifierCV(
+        estimator=base_model,
+        method="sigmoid",
+        cv=cv_folds
+    )
 
-    model_path = MODEL_DIR / f"{symbol}_{interval}_direction_h{horizon}.pkl"
-    joblib.dump(model, model_path)
+    calibrated_model.fit(X, y)
 
-    print(f"[OK] saved {model_path.name}")
+    # ==========================
+    # 保存
+    # ==========================
+    os.makedirs(MODEL_DIR, exist_ok=True)
 
+    model_path = f"{MODEL_DIR}/{symbol}_{interval}_direction_h{horizon}.pkl"
 
-# =====================
-# Train All
-# =====================
+    joblib.dump(calibrated_model, model_path)
 
-def main():
-
-    files = [f for f in os.listdir(RAW_DIR) if f.endswith(".csv")]
-
-    print(f"Found {len(files)} CSV files\n")
-
-    for file in files:
-        try:
-            name = file.replace(".csv", "")
-            symbol, interval = name.rsplit("_", 1)
-            train_direction_model(symbol, interval, horizon=1)
-
-        except Exception as e:
-            print(f"[ERROR] {file} -> {e}")
-
-    print("\nDirection training completed.")
-
-
-if __name__ == "__main__":
-    main()
+    print(f"[OK] Direction calibrated: {symbol} {interval} h{horizon} (cv={cv_folds})")

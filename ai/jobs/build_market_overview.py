@@ -8,24 +8,28 @@ from ai.src.dto import build_prediction_dto
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-CACHE_PATH = BASE_DIR / "data" / "cache" / "market_overview.json"
+CACHE_DIR = BASE_DIR / "data" / "cache"
 
-INTERVAL = "1h"
+INTERVALS = ["1h", "1d", "1w"]
 HORIZON = 1
-LIMIT = 10
 
 
-def build_cache():
+def build_cache(interval: str):
+
+    print(f"Building market overview cache ({interval})...")
+
     items = []
 
-    coins = get_top100_with_status(INTERVAL)
+    coins = get_top100_with_status(interval)
 
     for coin in coins:
-        if coin["status"] != "trained":
+
+        if coin.get("status") != "trained":
             continue
 
         try:
-            result = predict(coin["symbol"], INTERVAL, HORIZON)
+            result = predict(coin["symbol"], interval, HORIZON)
+
             if result.get("status") != "ok":
                 continue
 
@@ -49,21 +53,19 @@ def build_cache():
             print("Skip:", coin["symbol"], e)
             continue
 
-    # pct_change でソート（dtoの中にある）
+    # pct_change でソート
     items.sort(
         key=lambda x: x["data"]["metrics"]["pct_change"],
         reverse=True
     )
 
-    items = items[:LIMIT]
-
-    # rank付与
+    # rank付与（全件）
     for i, item in enumerate(items, start=1):
         item["rank"] = i
 
     data = {
         "meta": {
-            "interval": INTERVAL,
+            "interval": interval,
             "horizon": HORIZON,
             "count": len(items),
             "sort": "pct_change_desc",
@@ -72,13 +74,18 @@ def build_cache():
         "items": items,
     }
 
-    CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    CACHE_PATH.write_text(
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+
+    output_path = CACHE_DIR / f"market_overview_{interval}.json"
+
+    output_path.write_text(
         json.dumps(data, ensure_ascii=False, indent=2)
     )
 
-    print("Market overview cache updated")
+    print(f"Market overview cache updated ({interval})")
 
 
 if __name__ == "__main__":
-    build_cache()
+
+    for interval in INTERVALS:
+        build_cache(interval)

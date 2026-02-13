@@ -121,7 +121,7 @@
 ===================== */
 
 .mini-chart {
-  height: 60px;
+  height: 128px;
   margin: 10px 0 6px;
 }
 
@@ -173,3 +173,70 @@
   text-align: right;
   padding: 0 16px;
 }
+
+/* ===================== */
+/* Toggle Buttons */
+/* ===================== */
+
+.mo-toggle {
+  display: flex;
+  gap: 8px;
+}
+
+.mo-toggle button {
+  background: #1f2937;
+  color: #94a3b8;
+  border: 1px solid #374151;
+  padding: 12px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.mo-toggle button:hover {
+  background: #374151;
+  color: #fff;
+}
+
+.mo-toggle button.active {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.4);
+}
+
+#moInterval {
+  background: #111827;
+  color: #fff;
+  border: 1px solid #374151;
+  padding:10px;
+  border-radius: 6px;
+  outline: none;
+  transition: border 0.2s ease;
+}
+
+#moInterval:focus {
+  border-color: #2563eb;
+}
+
+#moSearch {
+  background: #111827;
+  border: 1px solid #374151;
+  color: #fff;
+  padding:10px;
+  border-radius: 6px;
+  outline: none;
+  transition: border 0.2s ease;
+  width: 100%;
+}
+
+#moSearch:focus {
+  border-color: #2563eb;
+}
+
+.mo-controls {
+    padding: 20px 20px 0 20px;
+}
+
+
