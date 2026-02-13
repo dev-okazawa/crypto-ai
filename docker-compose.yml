@@ -13,6 +13,7 @@ services:
     volumes:
       - ./logs:/app/logs
       - ./ai/data:/app/ai/data
+      - ./ai/models:/app/ai/models   # ← 追加（重要）
 
   cron:
     build: .
@@ -25,6 +26,7 @@ services:
     volumes:
       - ./logs:/app/logs
       - ./ai/data:/app/ai/data
+      - ./ai/models:/app/ai/models
       - ./cron/crontab:/etc/cron.d/crypto-cron
     command: >
       bash -c "
