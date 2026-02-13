@@ -363,7 +363,10 @@ from ai.src.repository.db import get_connection
 
 
 @app.get("/accuracy")
-def get_accuracy(interval: str = Query(...)):
+def get_accuracy(
+    interval: str = Query(...),
+    symbol: str = Query(...)
+):
 
     conn = get_connection()
     cur = conn.cursor()

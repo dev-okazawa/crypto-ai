@@ -180,14 +180,8 @@ async function loadPrediction({ silent = false } = {}) {
 
     const payload = response.data;
 
-    if (
-      !payload.metrics ||
-      !payload.chart ||
-      !payload.chart.candles ||
-      payload.chart.candles.length === 0
-    ) {
+    if (!payload.metrics || !payload.chart) {
       resultEl.textContent = "No data";
-      if (snapshotContainer) snapshotContainer.innerHTML = "";
       return;
     }
 
@@ -210,62 +204,62 @@ async function loadPrediction({ silent = false } = {}) {
       "flat";
 
     resultEl.innerHTML = `
-       <div class="result-row">
-           <span class="result-label">Model Base Price</span>
-           <span>${formatUSD(current)}</span>
-         </div>
+      <div class="result-row">
+        <span class="result-label">Model Base Price</span>
+        <span>${formatUSD(current)}</span>
+      </div>
 
-         <div class="result-row">
-           <span class="result-label">Predicted Price</span>
-           <span>${formatUSD(predicted)}</span>
-         </div>
+      <div class="result-row">
+        <span class="result-label">Predicted Price</span>
+        <span>${formatUSD(predicted)}</span>
+      </div>
 
-         <div class="result-row">
-           <span class="result-label">Price Change</span>
-           <span class="direction ${priceClass}">
-             ${formatDiff(diff, pct_change)}
-           </span>
-         </div>
+      <div class="result-row">
+        <span class="result-label">Price Change</span>
+        <span class="direction ${priceClass}">
+          ${formatDiff(diff, pct_change)}
+        </span>
+      </div>
 
-         <div class="result-row">
-           <span class="result-label">AI Market Bias</span>
-           <span class="direction ${priceClass}">
-             ${getBiasLabel(payload.trend)}
-           </span>
-         </div>
+      <div class="result-row">
+        <span class="result-label">AI Market Bias</span>
+        <span class="direction ${priceClass}">
+          ${getBiasLabel(payload.trend)}
+        </span>
+      </div>
 
-         <div class="result-row confidence-row">
-           <span class="result-label">Confidence</span>
-           <div class="confidence-bar">
-             <div class="confidence-fill"
-                  style="width:${Number(payload.confidence) || 0}%"></div>
-           </div>
-           <span>${Number(payload.confidence) || 0}%</span>
-         </div>
-
-         <!-- ⭐ Accuracyここに入れる -->
-         <div class="result-row accuracy-row">
-           <span class="result-label">Model Accuracy</span>
-           <div class="accuracy-bar">
-             <div id="accuracyFill" class="accuracy-fill"></div>
-           </div>
-           <span id="accuracyText">--%</span>
-         </div>       
-
-         <div class="result-row">
-           <span class="result-label">MAE</span>
-           <span id="maeText">--%</span>
-         </div>
-
-        <div class="result-row">
-           <span class="result-label">Last Updated (UTC)</span>
-           <span>${current_price_at || "—"}</span>
+      <div class="result-row confidence-row">
+        <span class="result-label">Confidence</span>
+        <div class="confidence-bar">
+          <div class="confidence-fill"
+               style="width:${Number(payload.confidence) || 0}%"></div>
         </div>
-      `;
+        <span>${Number(payload.confidence) || 0}%</span>
+      </div>
+
+      <div class="result-row accuracy-row">
+        <span class="result-label">Model Accuracy</span>
+        <div class="accuracy-bar">
+          <div id="accuracyFill" class="accuracy-fill"></div>
+        </div>
+        <span id="accuracyText">--%</span>
+      </div>
+
+      <div class="result-row">
+        <span class="result-label">MAE</span>
+        <span id="maeText">--%</span>
+      </div>
+
+      <div class="result-row">
+        <span class="result-label">Last Updated (UTC)</span>
+        <span>${current_price_at || "—"}</span>
+      </div>
+    `;
 
     renderSnapshotFromPrediction(payload);
 
-    loadAccuracy(interval);
+    // ⭐ 通貨別Accuracy呼び出し
+    loadAccuracy(symbol, interval);
 
   } catch (e) {
     console.error("Prediction error:", e);
@@ -275,13 +269,14 @@ async function loadPrediction({ silent = false } = {}) {
 }
 
 // =========================
-// Accuracy
+// Accuracy (通貨別対応)
 // =========================
-
-async function loadAccuracy(interval) {
+async function loadAccuracy(symbol, interval) {
 
   try {
-    const res = await fetch(`/accuracy?interval=${interval}`);
+    const res = await fetch(
+      `/accuracy?interval=${interval}&symbol=${symbol}`
+    );
     if (!res.ok) return;
 
     const data = await res.json();
@@ -291,17 +286,17 @@ async function loadAccuracy(interval) {
     const maeText = document.getElementById("maeText");
 
     if (!data || data.accuracy === null) {
-      fill.style.width = "0%";
-      text.textContent = "Evaluating...";
-      if (maeText) maeText.textContent = "--";
+      if (fill) fill.style.width = "0%";
+      if (text) text.textContent = "Evaluating...";
+      if (maeText) maeText.textContent = "--%";
       return;
     }
 
-    fill.style.width = `${data.accuracy}%`;
-    text.textContent = `${data.accuracy}%`;
+    if (fill) fill.style.width = `${data.accuracy}%`;
+    if (text) text.textContent = `${data.accuracy}%`;
 
     if (maeText && data.mae !== null) {
-      maeText.textContent = `${data.mae.toFixed(2)}%`;
+      maeText.textContent = `${Number(data.mae).toFixed(2)}%`;
     }
 
   } catch (e) {
@@ -310,7 +305,7 @@ async function loadAccuracy(interval) {
 }
 
 // =========================
-// Init (安全版)
+// Init
 // =========================
 window.addEventListener("DOMContentLoaded", async () => {
 
@@ -353,7 +348,6 @@ window.addEventListener("DOMContentLoaded", async () => {
   await loadSymbols({ keepSymbol: false });
   setTimeout(() => loadPrediction({ silent: true }), 300);
 
-  // 1分ごと更新
   setInterval(() => {
     if (document.visibilityState === "visible") {
       loadPrediction({ silent: true });

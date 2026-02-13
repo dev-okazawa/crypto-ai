@@ -1,69 +1,37 @@
-"""
-Cron / CLI entry point for daily full training.
+import sys
 
-Design:
-- No trained / untrained distinction
-- Always retrain ALL symbols
-- Models are overwritten every run
-"""
+from ai.src.train_price import train_price_model
+from ai.src.train_direction import train_direction_model
+from ai.src.market_cap import get_supported
 
-from pathlib import Path
-from datetime import datetime
+INTERVALS = ["1h", "1d", "1w"]
+DEFAULT_HORIZON = 1
 
-from ai.src.train_all_auto import train_symbol_all
 
-# =====================
-# Paths
-# =====================
+def train_symbol_all(symbol: str, horizons):
+    print(f"[TRAIN] {symbol}")
 
-BASE_DIR = Path(__file__).resolve().parents[2]
-DATA_DIR = BASE_DIR / "ai" / "data" / "raw"
+    for interval in INTERVALS:
+        for h in horizons:
+            print(f"  -> interval={interval} horizon={h}")
+            train_price_model(symbol, interval, h)
+            train_direction_model(symbol, interval, h)
 
-# =====================
-# Helpers
-# =====================
+    print(f"[TRAINED] {symbol}")
 
-def load_all_symbols():
-    """
-    学習対象の定義：
-    ai/data/raw に CSV が存在する通貨
-    （fetch が成功している = 学習可能）
-    """
-    symbols = set()
-
-    for p in DATA_DIR.glob("*_1h.csv"):
-        # 例: BTCUSDT_1h.csv → BTCUSDT
-        symbol = p.name.split("_")[0]
-        symbols.add(symbol)
-
-    return sorted(symbols)
-
-# =====================
-# Main
-# =====================
-
-def main():
-    print("=" * 60)
-    print("[TRAIN-ALL] start", datetime.utcnow().isoformat())
-    print("=" * 60)
-
-    symbols = load_all_symbols()
-    print(f"[SELECT] {len(symbols)} symbols")
-
-    if not symbols:
-        print("[TRAIN-ALL] no symbols found")
-        return
-
-    for symbol in symbols:
-        try:
-            print(f"[TRAIN] {symbol}")
-            train_symbol_all(symbol)
-        except Exception as e:
-            print(f"[ERROR] {symbol}: {e}")
-
-    print("=" * 60)
-    print("[TRAIN-ALL] done", datetime.utcnow().isoformat())
-    print("=" * 60)
 
 if __name__ == "__main__":
-    main()
+
+    if len(sys.argv) > 1:
+        horizons = [int(sys.argv[1])]
+    else:
+        horizons = [DEFAULT_HORIZON]
+
+    # 🔥 ここが最重要
+    symbols_data = get_supported("1h")
+    symbols = [s["symbol"] for s in symbols_data]
+
+    print(f"[AUTO TRAIN] symbols={len(symbols)} horizons={horizons}")
+
+    for symbol in symbols:
+        train_symbol_all(symbol, horizons)

@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
 
   api:
@@ -11,9 +13,11 @@ services:
     depends_on:
       - mysql
     volumes:
+      # 🔥 プロジェクト全体をマウント（開発向け）
+      - .:/app
       - ./logs:/app/logs
       - ./ai/data:/app/ai/data
-      - ./ai/models:/app/ai/models   # ← 追加（重要）
+      - ./ai/models:/app/ai/models
 
   cron:
     build: .
@@ -24,6 +28,7 @@ services:
     depends_on:
       - mysql
     volumes:
+      - .:/app
       - ./logs:/app/logs
       - ./ai/data:/app/ai/data
       - ./ai/models:/app/ai/models

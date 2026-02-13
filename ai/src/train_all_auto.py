@@ -35,3 +35,4 @@ if __name__ == "__main__":
 
     for symbol in symbols:
         train_symbol_all(symbol, horizons)
+        
