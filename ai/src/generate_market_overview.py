@@ -7,7 +7,7 @@ from ai.src.predict import predict
 OUTPUT_TEMPLATE = "ai/data/cache/market_overview_{interval}.json"
 
 HORIZON_MAP = {
-    "1h": 3,
+    "1h": 1,
     "1d": 1,
     "1w": 1,
 }
