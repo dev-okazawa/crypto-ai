@@ -1,0 +1,14 @@
+# モデル
+ai/models/
+backup
+
+# データ
+ai/data/
+cache/
+
+# ログ
+logs/
+
+# python
+__pycache__/
+*.pyc

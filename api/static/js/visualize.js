@@ -53,6 +53,18 @@ function formatUTC(isoString) {
   return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
 }
 
+// 🔥 シンボル表示を BTCUSDT → BTC / USDT に変換
+function formatPair(symbol) {
+  if (!symbol) return "";
+
+  if (symbol.endsWith("USDT")) {
+    const base = symbol.replace("USDT", "");
+    return `${base} / USDT`;
+  }
+
+  return symbol;
+}
+
 
 // =====================
 // Sorting
@@ -104,7 +116,9 @@ function renderCard(item, index) {
   card.innerHTML = `
     <div class="card-header">
       <div class="left">
-        <span class="rank">#${index + 1} ${payload.symbol}</span>
+        <span class="rank">
+          #${index + 1} ${formatPair(payload.symbol)}
+        </span>
         ${isPick ? `<span class="ai-pick">🔥 AI PICK</span>` : ""}
       </div>
 
@@ -239,9 +253,12 @@ function handleSearch() {
     return;
   }
 
-  const filtered = ALL_ITEMS.filter(item =>
-    item.data.symbol.toUpperCase().includes(keyword)
-  );
+  const filtered = ALL_ITEMS.filter(item => {
+    const raw = item.data.symbol.toUpperCase();
+    const formatted = formatPair(item.data.symbol).toUpperCase();
+
+    return raw.includes(keyword) || formatted.includes(keyword);
+  });
 
   renderList(filtered);
 }
@@ -263,7 +280,7 @@ function setMode(mode) {
     document.getElementById("btnLosers")?.classList.add("active");
   }
 
-  handleSearch(); // 現在の検索状態を維持
+  handleSearch();
 }
 
 
@@ -294,6 +311,6 @@ window.addEventListener("DOMContentLoaded", () => {
     btnLosers.addEventListener("click", () => setMode("losers"));
   }
 
-  setMode("gainers"); // 初期は上昇率
+  setMode("gainers");
   loadMarket();
 });

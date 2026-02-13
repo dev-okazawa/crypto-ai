@@ -75,7 +75,8 @@ function renderSymbolOptions(list) {
 
     const opt = document.createElement("option");
     opt.value = c.symbol;
-    opt.textContent = `${c.name} (${c.symbol.replace("USDT", "")})`;
+    const base = c.symbol.replace("USDT", "");
+    opt.textContent = `${c.name} (${base}) / USDT`;
     select.appendChild(opt);
   });
 
