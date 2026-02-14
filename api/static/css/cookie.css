@@ -1,0 +1,60 @@
+.cookie-banner {
+  position: fixed;
+  bottom: 20px;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.cookie-inner {
+  width: 100%;
+  max-width: 420px;   /* ← ここが重要 */
+  margin:0 auto;
+  background: #111827;
+  color: #ffffff;
+  padding: 16px 18px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  pointer-events: auto;
+}
+
+.cookie-banner a {
+  color: #60a5fa;   /* ← ここがリンク色 */
+}
+
+.cookie-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.cookie-btn {
+  flex: 1;
+  padding: 10px 0;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s ease;
+}
+
+.cookie-btn.accept {
+  background: #10b981;
+  color: #ffffff;
+}
+
+.cookie-btn.decline {
+  background: #374151;
+  color: #ffffff;
+}
+
+.cookie-btn:hover {
+  opacity: 0.9;
+}
