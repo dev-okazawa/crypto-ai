@@ -4,22 +4,37 @@ document.addEventListener("DOMContentLoaded", function () {
   const acceptBtn = document.getElementById("acceptCookies");
   const declineBtn = document.getElementById("declineCookies");
 
-  const consent = localStorage.getItem("cookie_consent");
+  if (!banner) return;
 
-  if (!consent && banner) {
-    banner.style.display = "block";
+  // =========================
+  // すでに選択済みか確認
+  // =========================
+  const consent = localStorage.getItem("cookieConsent");
+
+  if (consent === "accepted" || consent === "declined") {
+    banner.style.display = "none";
+    return;
   }
 
+  // 初回のみ表示
+  banner.style.display = "block";
+
+  // =========================
+  // Accept
+  // =========================
   if (acceptBtn) {
     acceptBtn.addEventListener("click", function () {
-      localStorage.setItem("cookie_consent", "accepted");
+      localStorage.setItem("cookieConsent", "accepted");
       banner.style.display = "none";
     });
   }
 
+  // =========================
+  // Decline
+  // =========================
   if (declineBtn) {
     declineBtn.addEventListener("click", function () {
-      localStorage.setItem("cookie_consent", "declined");
+      localStorage.setItem("cookieConsent", "declined");
       banner.style.display = "none";
     });
   }
