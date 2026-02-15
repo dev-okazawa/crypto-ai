@@ -7,7 +7,7 @@ const lastUpdatedEl = document.getElementById("lastUpdated");
 
 let CURRENT_INTERVAL = "1h";
 let ALL_ITEMS = [];
-let CURRENT_MODE = "gainers"; // gainers / losers
+let CURRENT_MODE = "gainers";
 
 
 // =====================
@@ -40,7 +40,6 @@ function formatUSD(price) {
 
 function formatUTC(isoString) {
   if (!isoString) return null;
-
   const dt = new Date(isoString);
   if (isNaN(dt.getTime())) return null;
 
@@ -53,32 +52,31 @@ function formatUTC(isoString) {
   return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
 }
 
-// 🔥 シンボル表示を BTCUSDT → BTC / USDT に変換
 function formatPair(symbol) {
   if (!symbol) return "";
-
   if (symbol.endsWith("USDT")) {
     const base = symbol.replace("USDT", "");
     return `${base} / USDT`;
   }
-
   return symbol;
 }
 
 
 // =====================
-// Sorting
+// Sorting（安全版）
 // =====================
 
 function sortItems(items) {
-  return [...items].sort((a, b) => {
-    const pctA = a.data.metrics.pct_change;
-    const pctB = b.data.metrics.pct_change;
+  return [...items]
+    .filter(item => item?.data?.metrics)
+    .sort((a, b) => {
+      const pctA = a.data.metrics.pct_change ?? 0;
+      const pctB = b.data.metrics.pct_change ?? 0;
 
-    return CURRENT_MODE === "gainers"
-      ? pctB - pctA
-      : pctA - pctB;
-  });
+      return CURRENT_MODE === "gainers"
+        ? pctB - pctA
+        : pctA - pctB;
+    });
 }
 
 
@@ -88,15 +86,17 @@ function sortItems(items) {
 
 function renderCard(item, index) {
 
-  if (!item || !item.data) return document.createElement("div");
-
-  const payload = item.data;
-
-  if (!payload.metrics || !payload.chart?.candles) {
+  if (!item?.data?.metrics) {
     return document.createElement("div");
   }
 
-  const { current, predicted, diff, pct_change } = payload.metrics;
+  const payload = item.data;
+  const metrics = payload.metrics;
+
+  const current = metrics.current ?? 0;
+  const predicted = metrics.predicted ?? 0;
+  const diff = metrics.diff ?? 0;
+  const pct_change = metrics.pct_change ?? 0;
 
   const trend =
     diff > 0 ? "UP" :
@@ -117,11 +117,10 @@ function renderCard(item, index) {
     <div class="card-header">
       <div class="left">
         <span class="rank">
-          #${index + 1} ${formatPair(payload.symbol)}
+          #${item.rank ?? index + 1} ${formatPair(payload.symbol)}
         </span>
         ${isPick ? `<span class="ai-pick">🔥 AI PICK</span>` : ""}
       </div>
-
       <span class="trend ${colorClass}">
         ${trend}
       </span>
@@ -138,12 +137,16 @@ function renderCard(item, index) {
     </div>
 
     <div class="mini-chart">
-      ${renderPredictionChart({
-        chart: payload.chart,
-        diff,
-        interval: payload.meta?.interval || CURRENT_INTERVAL,
-        mode: "mini"
-      })}
+      ${
+        payload.chart
+          ? renderPredictionChart({
+              chart: payload.chart,
+              diff,
+              interval: payload.meta?.interval || CURRENT_INTERVAL,
+              mode: "mini"
+            })
+          : ""
+      }
     </div>
 
     <div class="confidence-row">
@@ -151,10 +154,10 @@ function renderCard(item, index) {
       <div class="confidence-bar">
         <div
           class="confidence-fill"
-          style="width:${payload.confidence || 0}%"
+          style="width:${payload.confidence ?? 0}%"
         ></div>
       </div>
-      <span>${payload.confidence || 0}%</span>
+      <span>${(payload.confidence ?? 0).toFixed(2)}%</span>
     </div>
   `;
 
@@ -209,12 +212,14 @@ async function loadMarket() {
       `/api/market-overview?interval=${CURRENT_INTERVAL}&limit=200`
     );
 
+    if (!res.ok) {
+      throw new Error("API error");
+    }
+
     const data = await res.json();
 
-    if (!data.items) {
-      container.innerHTML =
-        "<p style='padding:16px;color:#ef4444'>No data</p>";
-      return;
+    if (!data?.items) {
+      throw new Error("Invalid response");
     }
 
     ALL_ITEMS = data.items;
@@ -243,6 +248,8 @@ async function loadMarket() {
 
 function handleSearch() {
 
+  if (!ALL_ITEMS.length) return;
+
   const input = document.getElementById("moSearch");
   if (!input) return;
 
@@ -254,9 +261,8 @@ function handleSearch() {
   }
 
   const filtered = ALL_ITEMS.filter(item => {
-    const raw = item.data.symbol.toUpperCase();
-    const formatted = formatPair(item.data.symbol).toUpperCase();
-
+    const raw = item.data?.symbol?.toUpperCase() ?? "";
+    const formatted = formatPair(item.data?.symbol ?? "").toUpperCase();
     return raw.includes(keyword) || formatted.includes(keyword);
   });
 
@@ -280,7 +286,7 @@ function setMode(mode) {
     document.getElementById("btnLosers")?.classList.add("active");
   }
 
-  handleSearch();
+  renderList(ALL_ITEMS);
 }
 
 
