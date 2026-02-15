@@ -80,11 +80,11 @@ function renderPredictionChart({ chart, diff, interval = "1h", mode = "full" }) 
   const isMini = mode === "mini";
 
   const width = isMini ? 380 : 720;
-  const height = isMini ? 150 : 260;
+  const height = isMini ? 150 : 300;
 
   const margin = isMini
-    ? { top: 15, right: 20, bottom: 40, left: 60 }
-    : { top: 20, right: 40, bottom: 60, left: 90 };
+  ? { top: 5, right: 20, bottom: 25, left: 55 }
+  : { top: 10, right: 30, bottom: 35, left: 75 };
 
   const chartWidth = width - margin.left - margin.right;
   const chartHeight = height - margin.top - margin.bottom;
