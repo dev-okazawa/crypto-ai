@@ -141,6 +141,7 @@ def get_supported(interval: str = "1h"):
             "symbol": symbol,
             "name": c.get("name"),
             "market_cap": c.get("market_cap"),
+            "image": c.get("image"),
         })
 
     return result

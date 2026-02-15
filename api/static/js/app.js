@@ -23,22 +23,13 @@ function formatUSD(price) {
     });
   }
 
-  const str = abs.toFixed(18);
-  if (!str.includes(".")) return sign + "USD " + str;
-
-  const decimal = str.split(".")[1] || "";
-  const zeroMatch = decimal.match(/^0+/);
-  const zeroCount = zeroMatch ? zeroMatch[0].length : 0;
-  const significant = decimal.slice(zeroCount, zeroCount + 4) || "0000";
-
-  return sign + `USD 0.0<sub class="cg-zero">${zeroCount}</sub>${significant}`;
+  return sign + "USD " + abs.toFixed(6);
 }
 
 function formatDiff(diff, pct) {
   const sign = diff > 0 ? "+" : diff < 0 ? "-" : "";
   const diffAbs = Math.abs(diff);
   const pctAbs = Math.abs(pct);
-
   return `${sign}${formatUSD(diffAbs)} (${sign}${pctAbs.toFixed(2)}%)`;
 }
 
@@ -49,50 +40,17 @@ function parseTimeframe(tf) {
   return { interval: "1h", horizon: 1 };
 }
 
-function getBiasLabel(trend) {
-  if (trend === "UP") return "Bullish Bias";
-  if (trend === "DOWN") return "Bearish Bias";
-  return "Neutral Bias";
-}
-
 // =========================
 // State
 // =========================
+
 let ALL_SYMBOLS = [];
 let CURRENT_SYMBOL = null;
 
 // =========================
-// Render symbol options
+// Load Symbols
 // =========================
-function renderSymbolOptions(list) {
-  const select = document.getElementById("symbol");
-  if (!select) return;
 
-  select.innerHTML = "";
-
-  list.forEach(c => {
-    if (!c || !c.symbol || !c.name) return;
-
-    const opt = document.createElement("option");
-    opt.value = c.symbol;
-
-    const base = c.symbol.replace("USDT", "");
-    opt.textContent = `${c.name} ${base} / USDT`;
-
-     select.appendChild(opt);
-  });
-
-  if (
-    CURRENT_SYMBOL &&
-    [...select.options].some(o => o.value === CURRENT_SYMBOL)
-  ) {
-    select.value = CURRENT_SYMBOL;
-  }
-}
-
-// =========================
-// Load symbols
-// =========================
 async function loadSymbols({ keepSymbol = true } = {}) {
   try {
     const timeframeEl = document.getElementById("timeframe");
@@ -112,7 +70,17 @@ async function loadSymbols({ keepSymbol = true } = {}) {
     ALL_SYMBOLS = data;
     CURRENT_SYMBOL = prev || (data[0] ? data[0].symbol : null);
 
-    renderSymbolOptions(ALL_SYMBOLS);
+    const select = document.getElementById("symbol");
+    select.innerHTML = "";
+
+    ALL_SYMBOLS.forEach(c => {
+      const opt = document.createElement("option");
+      opt.value = c.symbol;
+      opt.textContent = `${c.name} ${c.symbol.replace("USDT", "")} / USDT`;
+      select.appendChild(opt);
+    });
+
+    if (CURRENT_SYMBOL) select.value = CURRENT_SYMBOL;
 
   } catch (e) {
     console.error("loadSymbols error:", e);
@@ -120,45 +88,15 @@ async function loadSymbols({ keepSymbol = true } = {}) {
 }
 
 // =========================
-// Snapshot Chart
-// =========================
-function renderSnapshotFromPrediction(payload) {
-  const container = document.getElementById("snapshotContainer");
-  if (!container) return;
-
-  if (
-    !payload.chart ||
-    !payload.chart.candles ||
-    payload.chart.candles.length === 0
-  ) {
-    container.innerHTML = "";
-    return;
-  }
-
-  if (typeof renderPredictionChart !== "function") {
-    console.warn("renderPredictionChart not found");
-    return;
-  }
-
-  container.innerHTML = renderPredictionChart({
-    chart: payload.chart,
-    diff: payload.metrics.diff,
-    interval: payload.meta?.interval || "1h",
-    mode: "full"
-  });
-}
-
-// =========================
 // Load Prediction
 // =========================
+
 async function loadPrediction({ silent = false } = {}) {
 
-  const resultEl = document.getElementById("result");
-  const snapshotContainer = document.getElementById("snapshotContainer");
   const symbolEl = document.getElementById("symbol");
   const timeframeEl = document.getElementById("timeframe");
 
-  if (!resultEl || !symbolEl || !timeframeEl) return;
+  if (!symbolEl || !timeframeEl) return;
 
   const symbol = symbolEl.value;
   if (!symbol) return;
@@ -167,8 +105,6 @@ async function loadPrediction({ silent = false } = {}) {
 
   const tf = timeframeEl.value;
   const { interval, horizon } = parseTimeframe(tf);
-
-  if (!silent) resultEl.textContent = "Loading...";
 
   try {
 
@@ -182,11 +118,8 @@ async function loadPrediction({ silent = false } = {}) {
     if (!response || !response.data) throw new Error("No data");
 
     const payload = response.data;
-
-    if (!payload.metrics || !payload.chart) {
-      resultEl.textContent = "No data";
-      return;
-    }
+    const metrics = payload.metrics;
+    if (!metrics) return;
 
     const {
       current,
@@ -194,88 +127,89 @@ async function loadPrediction({ silent = false } = {}) {
       diff,
       pct_change,
       current_price_at
-    } = payload.metrics;
-
-    if (!Number.isFinite(current) || !Number.isFinite(predicted)) {
-      resultEl.textContent = "No data";
-      return;
-    }
+    } = metrics;
 
     const priceClass =
       diff > 0 ? "up" :
       diff < 0 ? "down" :
       "flat";
 
-    resultEl.innerHTML = `
-      <div class="result-row">
-        <span class="result-label">Model Base Price</span>
-        <span>${formatUSD(current)}</span>
-      </div>
+    // =========================
+    // ⭐ シンボルヘッダー更新
+    // =========================
 
-      <div class="result-row">
-        <span class="result-label">Predicted Price</span>
-        <span>${formatUSD(predicted)}</span>
-      </div>
+    const symbolInfo = ALL_SYMBOLS.find(s => s.symbol === symbol);
+    const imageUrl = symbolInfo?.image;
+    const base = symbol.replace("USDT", "");
 
-      <div class="result-row">
-        <span class="result-label">Price Change</span>
-        <span class="direction ${priceClass}">
-          ${formatDiff(diff, pct_change)}
-        </span>
-      </div>
+    const header = document.getElementById("symbolHeader");
+    const logo = document.getElementById("symbolLogo");
+    const title = document.getElementById("symbolTitle");
 
-      <div class="result-row">
-        <span class="result-label">AI Market Bias</span>
-        <span class="direction ${priceClass}">
-          ${getBiasLabel(payload.trend)}
-        </span>
-      </div>
+    if (header && logo && title) {
+      title.innerText = `${base} / USDT`;
 
-      <div class="result-row confidence-row">
-        <span class="result-label">Confidence</span>
-        <div class="confidence-bar">
-          <div class="confidence-fill"
-               style="width:${Number(payload.confidence) || 0}%"></div>
-        </div>
-        <span>${Number(payload.confidence) || 0}%</span>
-      </div>
+      if (imageUrl) {
+        logo.src = imageUrl;
+        header.style.display = "flex";
+      } else {
+        header.style.display = "none";
+      }
+    }
 
-      <div class="result-row accuracy-row">
-        <span class="result-label">Model Accuracy</span>
-        <div class="accuracy-bar">
-          <div id="accuracyFill" class="accuracy-fill"></div>
-        </div>
-        <span id="accuracyText">--%</span>
-      </div>
+    // =========================
+    // DOM安全更新
+    // =========================
 
-      <div class="result-row">
-        <span class="result-label">MAE</span>
-        <span id="maeText">--%</span>
-      </div>
+    document.getElementById("curPrice").innerHTML =
+      formatUSD(current);
 
-      <div class="result-row">
-        <span class="result-label">Last Updated (UTC)</span>
-        <span>${current_price_at || "—"}</span>
-      </div>
-    `;
+    document.getElementById("predPrice").innerHTML =
+      formatUSD(predicted);
 
-    renderSnapshotFromPrediction(payload);
+    document.getElementById("priceChange").innerHTML =
+      `<span class="${priceClass}">${formatDiff(diff, pct_change)}</span>`;
 
-    // ⭐ 通貨別Accuracy呼び出し
+    document.getElementById("confidenceFill").style.width =
+      `${Number(payload.confidence) || 0}%`;
+
+    document.getElementById("confidenceText").innerText =
+      `${Number(payload.confidence) || 0}%`;
+
+    document.getElementById("updatedAt").innerText =
+      current_price_at || "—";
+
+    // =========================
+    // Chart
+    // =========================
+
+    if (
+      payload.chart &&
+      payload.chart.candles &&
+      typeof renderPredictionChart === "function"
+    ) {
+      const container = document.getElementById("snapshotContainer");
+      container.innerHTML = renderPredictionChart({
+        chart: payload.chart,
+        diff: payload.metrics.diff,
+        interval: payload.meta?.interval || "1h",
+        mode: "full"
+      });
+    }
+
+    // Accuracy & MAE
     loadAccuracy(symbol, interval);
 
   } catch (e) {
     console.error("Prediction error:", e);
-    resultEl.textContent = "No data";
-    if (snapshotContainer) snapshotContainer.innerHTML = "";
   }
 }
 
 // =========================
-// Accuracy (通貨別対応)
+// Accuracy + MAE
 // =========================
-async function loadAccuracy(symbol, interval) {
 
+async function loadAccuracy(symbol, interval) {
   try {
     const res = await fetch(
       `/accuracy?interval=${interval}&symbol=${symbol}`
@@ -300,6 +234,8 @@ async function loadAccuracy(symbol, interval) {
 
     if (maeText && data.mae !== null) {
       maeText.textContent = `${Number(data.mae).toFixed(2)}%`;
+    } else if (maeText) {
+      maeText.textContent = "--%";
     }
 
   } catch (e) {
@@ -310,12 +246,12 @@ async function loadAccuracy(symbol, interval) {
 // =========================
 // Init
 // =========================
+
 window.addEventListener("DOMContentLoaded", async () => {
 
   const predictBtn = document.getElementById("predictBtn");
   const symbol = document.getElementById("symbol");
   const timeframe = document.getElementById("timeframe");
-  const symbolSearch = document.getElementById("symbolSearch");
 
   if (predictBtn)
     predictBtn.addEventListener("click", () => loadPrediction());
@@ -331,24 +267,8 @@ window.addEventListener("DOMContentLoaded", async () => {
       loadPrediction({ silent: true });
     });
 
-  if (symbolSearch)
-    symbolSearch.addEventListener("input", function () {
-      const keyword = this.value.trim().toUpperCase();
-
-      if (!keyword) {
-        renderSymbolOptions(ALL_SYMBOLS);
-        return;
-      }
-
-      const filtered = ALL_SYMBOLS.filter(c =>
-        c.symbol.toUpperCase().includes(keyword) ||
-        (c.name && c.name.toUpperCase().includes(keyword))
-      );
-
-      renderSymbolOptions(filtered);
-    });
-
   await loadSymbols({ keepSymbol: false });
+
   setTimeout(() => loadPrediction({ silent: true }), 300);
 
   setInterval(() => {

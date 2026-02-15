@@ -63,7 +63,7 @@ function formatPair(symbol) {
 
 
 // =====================
-// Sorting（安全版）
+// Sorting
 // =====================
 
 function sortItems(items) {
@@ -115,12 +115,28 @@ function renderCard(item, index) {
 
   card.innerHTML = `
     <div class="card-header">
-      <div class="left">
+      <div class="left" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+
         <span class="rank">
-          #${item.rank ?? index + 1} ${formatPair(payload.symbol)}
+          #${item.rank ?? index + 1}
         </span>
+
+        ${item.image ? `
+          <img 
+            src="${item.image}" 
+            alt="${payload.symbol}" 
+            class="coin-logo"
+            onerror="this.style.display='none'"
+          />
+        ` : ""}
+
+        <span class="pair">
+          ${formatPair(payload.symbol)}
+        </span>
+
         ${isPick ? `<span class="ai-pick">🔥 AI PICK</span>` : ""}
       </div>
+
       <span class="trend ${colorClass}">
         ${trend}
       </span>
@@ -224,7 +240,6 @@ async function loadMarket() {
 
     ALL_ITEMS = data.items;
 
-    // 選択中の interval に合わせて Last Updated を表示
     if (lastUpdatedEl && data.meta?.generated_at) {
       const formatted = formatUTC(data.meta.generated_at);
       if (formatted) {
@@ -303,7 +318,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const btnLosers = document.getElementById("btnLosers");
 
   if (intervalEl) {
-    intervalEl.addEventListener("change", loadMarket); // interval切替で更新
+    intervalEl.addEventListener("change", loadMarket);
   }
 
   if (searchEl) {
@@ -319,5 +334,5 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   setMode("gainers");
-  loadMarket(); // ページロード時に1回だけ更新
+  loadMarket();
 });

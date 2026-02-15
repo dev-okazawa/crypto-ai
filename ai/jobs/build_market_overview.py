@@ -36,6 +36,9 @@ def build_cache(interval: str):
             dto = build_prediction_dto(result)
 
             wrapped = {
+                # 🔥 ここを追加（CoinGeckoのimageをそのまま流す）
+                "image": coin.get("image"),
+
                 "meta": {
                     "symbol": dto["symbol"],
                     "interval": dto["meta"]["interval"],

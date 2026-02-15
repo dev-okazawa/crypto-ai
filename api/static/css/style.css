@@ -44,7 +44,7 @@ button {
 }
 
 .result {
-  margin-top: 16px;
+  /*margin-top: 16px;*/
   padding: 16px;
   border-radius: 10px;
   background: #020617;
@@ -305,4 +305,30 @@ button {
 }
 
 
+.symbol-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin:0 0 12px 0;
+}
 
+.coin-logo-large {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.symbol-title-text {
+  margin: 0;
+  padding: 0;
+  line-height: 1.1;       /* ← ここ重要 */
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.coin-logo-large {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}

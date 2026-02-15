@@ -38,6 +38,13 @@
 
     <!-- Prediction Result -->
     <div id="result" class="result">
+
+      <!-- ⭐ 追加：シンボルヘッダー -->
+      <div id="symbolHeader" class="symbol-header" style="display:none;">
+        <img id="symbolLogo" class="coin-logo-large" alt="logo">
+        <h2 id="symbolTitle" class="symbol-title-text"></h2>
+      </div>
+
       <div class="result-row">
         <span class="result-label">Current Price (Model)</span>
         <span id="curPrice">—</span>
@@ -69,6 +76,10 @@
         <span id="accuracyText">--%</span>
       </div>
 
+      <div class="result-row">
+        <span class="result-label">MAE</span>
+        <span id="maeText">--%</span>
+      </div>
 
       <div class="result-row">
         <span class="result-label">Last Updated (UTC)</span>
