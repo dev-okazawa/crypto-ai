@@ -17,13 +17,24 @@ function formatUSD(price) {
   }
 
   if (abs >= 0.01) {
-    return sign + "USD " + abs.toLocaleString(undefined, {
-      minimumFractionDigits: 4,
-      maximumFractionDigits: 4
-    });
+    return sign + "USD " + abs.toFixed(4);
   }
 
-  return sign + "USD " + abs.toFixed(6);
+  const str = abs.toFixed(12);
+  const match = str.match(/^0\.0+/);
+
+  if (!match) {
+    return sign + "USD " + abs.toFixed(6);
+  }
+
+  const zeroCount = match[0].length - 2;
+
+  const significant = str
+    .slice(match[0].length)
+    .replace(/0+$/, "")
+    .slice(0, 4);
+
+  return `${sign}USD 0.0<sub class="zero-count">${zeroCount}</sub>${significant}`;
 }
 
 function formatDiff(diff, pct) {
@@ -48,6 +59,33 @@ let ALL_SYMBOLS = [];
 let CURRENT_SYMBOL = null;
 
 // =========================
+// Render Symbol Options
+// =========================
+
+function renderSymbolOptions(list) {
+  const select = document.getElementById("symbol");
+  if (!select) return;
+
+  select.innerHTML = "";
+
+  list.forEach(c => {
+    if (!c || !c.symbol || !c.name) return;
+
+    const opt = document.createElement("option");
+    opt.value = c.symbol;
+
+    const base = c.symbol.replace("USDT", "");
+    opt.textContent = `${c.name} ${base} / USDT`;
+
+    select.appendChild(opt);
+  });
+
+  if (CURRENT_SYMBOL) {
+    select.value = CURRENT_SYMBOL;
+  }
+}
+
+// =========================
 // Load Symbols
 // =========================
 
@@ -70,17 +108,7 @@ async function loadSymbols({ keepSymbol = true } = {}) {
     ALL_SYMBOLS = data;
     CURRENT_SYMBOL = prev || (data[0] ? data[0].symbol : null);
 
-    const select = document.getElementById("symbol");
-    select.innerHTML = "";
-
-    ALL_SYMBOLS.forEach(c => {
-      const opt = document.createElement("option");
-      opt.value = c.symbol;
-      opt.textContent = `${c.name} ${c.symbol.replace("USDT", "")} / USDT`;
-      select.appendChild(opt);
-    });
-
-    if (CURRENT_SYMBOL) select.value = CURRENT_SYMBOL;
+    renderSymbolOptions(ALL_SYMBOLS);
 
   } catch (e) {
     console.error("loadSymbols error:", e);
@@ -135,7 +163,7 @@ async function loadPrediction({ silent = false } = {}) {
       "flat";
 
     // =========================
-    // ⭐ シンボルヘッダー更新
+    // ⭐ Symbol Header
     // =========================
 
     const symbolInfo = ALL_SYMBOLS.find(s => s.symbol === symbol);
@@ -158,7 +186,7 @@ async function loadPrediction({ silent = false } = {}) {
     }
 
     // =========================
-    // DOM安全更新
+    // Update DOM
     // =========================
 
     document.getElementById("curPrice").innerHTML =
@@ -179,10 +207,6 @@ async function loadPrediction({ silent = false } = {}) {
     document.getElementById("updatedAt").innerText =
       current_price_at || "—";
 
-    // =========================
-    // Chart
-    // =========================
-
     if (
       payload.chart &&
       payload.chart.candles &&
@@ -197,7 +221,6 @@ async function loadPrediction({ silent = false } = {}) {
       });
     }
 
-    // Accuracy & MAE
     loadAccuracy(symbol, interval);
 
   } catch (e) {
@@ -252,6 +275,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   const predictBtn = document.getElementById("predictBtn");
   const symbol = document.getElementById("symbol");
   const timeframe = document.getElementById("timeframe");
+  const symbolSearch = document.getElementById("symbolSearch");
 
   if (predictBtn)
     predictBtn.addEventListener("click", () => loadPrediction());
@@ -266,6 +290,32 @@ window.addEventListener("DOMContentLoaded", async () => {
       await loadSymbols({ keepSymbol: true });
       loadPrediction({ silent: true });
     });
+
+  if (symbolSearch) {
+    symbolSearch.addEventListener("input", function () {
+
+      const keyword = this.value.trim().toUpperCase();
+
+      if (!keyword) {
+        renderSymbolOptions(ALL_SYMBOLS);
+        return;
+      }
+
+      const filtered = ALL_SYMBOLS.filter(c =>
+        c.symbol.toUpperCase().includes(keyword) ||
+       (c.name && c.name.toUpperCase().includes(keyword))
+     );
+
+      if (filtered.length === 0) {
+        renderSymbolOptions([]);
+        return;
+       }
+
+      CURRENT_SYMBOL = filtered[0].symbol;
+
+    renderSymbolOptions(filtered);
+  });
+}
 
   await loadSymbols({ keepSymbol: false });
 
