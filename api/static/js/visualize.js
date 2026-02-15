@@ -9,7 +9,6 @@ let CURRENT_INTERVAL = "1h";
 let ALL_ITEMS = [];
 let CURRENT_MODE = "gainers";
 
-
 // =====================
 // Utils
 // =====================
@@ -61,7 +60,6 @@ function formatPair(symbol) {
   return symbol;
 }
 
-
 // =====================
 // Sorting（安全版）
 // =====================
@@ -78,7 +76,6 @@ function sortItems(items) {
         : pctA - pctB;
     });
 }
-
 
 // =====================
 // Render Card
@@ -164,7 +161,6 @@ function renderCard(item, index) {
   return card;
 }
 
-
 // =====================
 // Render List
 // =====================
@@ -188,7 +184,6 @@ function renderList(items) {
     container.appendChild(card);
   });
 }
-
 
 // =====================
 // Load Market Overview
@@ -224,11 +219,14 @@ async function loadMarket() {
 
     ALL_ITEMS = data.items;
 
-    if (lastUpdatedEl && data.meta?.generated_at) {
-      const formatted = formatUTC(data.meta.generated_at);
-      if (formatted) {
+    // 🔹 タイムフレームに応じた Last Updated を表示
+    if (lastUpdatedEl) {
+      const genTime = data.meta?.generated_at ?? null;
+      if (genTime) {
         lastUpdatedEl.innerText =
-          "Last Updated (UTC) " + formatted;
+          "Last Updated (UTC) " + formatUTC(genTime);
+      } else {
+        lastUpdatedEl.innerText = "Last Updated (UTC) —";
       }
     }
 
@@ -240,7 +238,6 @@ async function loadMarket() {
       "<p style='padding:16px;color:#ef4444'>Failed to load market data.</p>";
   }
 }
-
 
 // =====================
 // Search
@@ -269,7 +266,6 @@ function handleSearch() {
   renderList(filtered);
 }
 
-
 // =====================
 // Toggle Buttons
 // =====================
@@ -288,7 +284,6 @@ function setMode(mode) {
 
   renderList(ALL_ITEMS);
 }
-
 
 // =====================
 // Init
