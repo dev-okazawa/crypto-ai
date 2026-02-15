@@ -11,13 +11,10 @@ document.addEventListener("DOMContentLoaded", function () {
   // =========================
   const consent = localStorage.getItem("cookieConsent");
 
-  if (consent === "accepted" || consent === "declined") {
-    banner.style.display = "none";
-    return;
+  // 未選択のときだけ表示
+  if (!consent) {
+    banner.style.display = "flex"; // ← flexで表示（blockではない）
   }
-
-  // 初回のみ表示
-  banner.style.display = "block";
 
   // =========================
   // Accept
