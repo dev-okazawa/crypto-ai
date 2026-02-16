@@ -2,54 +2,13 @@
 // Utils
 // =========================
 
-function formatUSD(price) {
-  const n = Number(price);
-  if (!Number.isFinite(n)) return "USD —";
-
-  const abs = Math.abs(n);
-  const sign = n < 0 ? "-" : "";
-
-  if (abs >= 1) {
-    return sign + "USD " + abs.toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
-  }
-
-  if (abs >= 0.01) {
-    return sign + "USD " + abs.toFixed(4);
-  }
-
-  const str = abs.toFixed(12);
-  const match = str.match(/^0\.0+/);
-
-  if (!match) {
-    return sign + "USD " + abs.toFixed(6);
-  }
-
-  const zeroCount = match[0].length - 2;
-
-  const significant = str
-    .slice(match[0].length)
-    .replace(/0+$/, "")
-    .slice(0, 4);
-
-  return `${sign}USD 0.0<sub class="zero-count">${zeroCount}</sub>${significant}`;
-}
-
-function formatDiff(diff, pct) {
-  const sign = diff > 0 ? "+" : diff < 0 ? "-" : "";
-  const diffAbs = Math.abs(diff);
-  const pctAbs = Math.abs(pct);
-  return `${sign}${formatUSD(diffAbs)} (${sign}${pctAbs.toFixed(2)}%)`;
-}
-
 function parseTimeframe(tf) {
   if (tf === "1h") return { interval: "1h", horizon: 1 };
   if (tf === "1d") return { interval: "1d", horizon: 1 };
   if (tf === "1w") return { interval: "1w", horizon: 1 };
   return { interval: "1h", horizon: 1 };
 }
+
 
 // =========================
 // State
@@ -58,17 +17,20 @@ function parseTimeframe(tf) {
 let ALL_SYMBOLS = [];
 let CURRENT_SYMBOL = null;
 
+
 // =========================
 // Render Symbol Options
 // =========================
 
 function renderSymbolOptions(list) {
+
   const select = document.getElementById("symbol");
   if (!select) return;
 
   select.innerHTML = "";
 
   list.forEach(c => {
+
     if (!c || !c.symbol || !c.name) return;
 
     const opt = document.createElement("option");
@@ -85,12 +47,15 @@ function renderSymbolOptions(list) {
   }
 }
 
+
 // =========================
 // Load Symbols
 // =========================
 
 async function loadSymbols({ keepSymbol = true } = {}) {
+
   try {
+
     const timeframeEl = document.getElementById("timeframe");
     if (!timeframeEl) return;
 
@@ -114,6 +79,7 @@ async function loadSymbols({ keepSymbol = true } = {}) {
     console.error("loadSymbols error:", e);
   }
 }
+
 
 // =========================
 // Load Prediction
@@ -143,11 +109,10 @@ async function loadPrediction({ silent = false } = {}) {
     if (!res.ok) throw new Error("Prediction API error");
 
     const response = await res.json();
-    if (!response || !response.data) throw new Error("No data");
+    if (!response?.data?.metrics) throw new Error("No data");
 
     const payload = response.data;
-    const metrics = payload.metrics;
-    if (!metrics) return;
+    const m = payload.metrics;
 
     const {
       current,
@@ -155,12 +120,13 @@ async function loadPrediction({ silent = false } = {}) {
       diff,
       pct_change,
       current_price_at
-    } = metrics;
+    } = m;
 
     const priceClass =
       diff > 0 ? "up" :
       diff < 0 ? "down" :
       "flat";
+
 
     // =========================
     // ⭐ Symbol Header
@@ -175,6 +141,7 @@ async function loadPrediction({ silent = false } = {}) {
     const title = document.getElementById("symbolTitle");
 
     if (header && logo && title) {
+
       title.innerText = `${base} / USDT`;
 
       if (imageUrl) {
@@ -184,6 +151,7 @@ async function loadPrediction({ silent = false } = {}) {
         header.style.display = "none";
       }
     }
+
 
     // =========================
     // Update DOM
@@ -196,7 +164,9 @@ async function loadPrediction({ silent = false } = {}) {
       formatUSD(predicted);
 
     document.getElementById("priceChange").innerHTML =
-      `<span class="${priceClass}">${formatDiff(diff, pct_change)}</span>`;
+      `<span class="${priceClass}">
+        ${formatDiff(diff, pct_change)}
+      </span>`;
 
     document.getElementById("confidenceFill").style.width =
       `${Number(payload.confidence) || 0}%`;
@@ -207,18 +177,27 @@ async function loadPrediction({ silent = false } = {}) {
     document.getElementById("updatedAt").innerText =
       current_price_at || "—";
 
+
+    // =========================
+    // Chart
+    // =========================
+
     if (
       payload.chart &&
       payload.chart.candles &&
       typeof renderPredictionChart === "function"
     ) {
-      const container = document.getElementById("snapshotContainer");
-      container.innerHTML = renderPredictionChart({
-        chart: payload.chart,
-        diff: payload.metrics.diff,
-        interval: payload.meta?.interval || "1h",
-        mode: "full"
-      });
+
+      const container =
+        document.getElementById("snapshotContainer");
+
+      container.innerHTML =
+        renderPredictionChart({
+          chart: payload.chart,
+          diff,
+          interval: payload.meta?.interval || "1h",
+          mode: "full"
+        });
     }
 
     loadAccuracy(symbol, interval);
@@ -228,15 +207,19 @@ async function loadPrediction({ silent = false } = {}) {
   }
 }
 
+
 // =========================
 // Accuracy + MAE
 // =========================
 
 async function loadAccuracy(symbol, interval) {
+
   try {
+
     const res = await fetch(
       `/accuracy?interval=${interval}&symbol=${symbol}`
     );
+
     if (!res.ok) return;
 
     const data = await res.json();
@@ -246,9 +229,11 @@ async function loadAccuracy(symbol, interval) {
     const maeText = document.getElementById("maeText");
 
     if (!data || data.accuracy === null) {
+
       if (fill) fill.style.width = "0%";
       if (text) text.textContent = "Evaluating...";
       if (maeText) maeText.textContent = "--%";
+
       return;
     }
 
@@ -256,7 +241,8 @@ async function loadAccuracy(symbol, interval) {
     if (text) text.textContent = `${data.accuracy}%`;
 
     if (maeText && data.mae !== null) {
-      maeText.textContent = `${Number(data.mae).toFixed(2)}%`;
+      maeText.textContent =
+        `${Number(data.mae).toFixed(2)}%`;
     } else if (maeText) {
       maeText.textContent = "--%";
     }
@@ -266,60 +252,76 @@ async function loadAccuracy(symbol, interval) {
   }
 }
 
+
 // =========================
 // Init
 // =========================
 
 window.addEventListener("DOMContentLoaded", async () => {
 
-  const predictBtn = document.getElementById("predictBtn");
-  const symbol = document.getElementById("symbol");
-  const timeframe = document.getElementById("timeframe");
-  const symbolSearch = document.getElementById("symbolSearch");
+  const predictBtn =
+    document.getElementById("predictBtn");
+
+  const symbol =
+    document.getElementById("symbol");
+
+  const timeframe =
+    document.getElementById("timeframe");
+
+  const symbolSearch =
+    document.getElementById("symbolSearch");
+
 
   if (predictBtn)
-    predictBtn.addEventListener("click", () => loadPrediction());
+    predictBtn.addEventListener("click",
+      () => loadPrediction());
 
   if (symbol)
-    symbol.addEventListener("change", () =>
-      loadPrediction({ silent: true })
-    );
+    symbol.addEventListener("change",
+      () => loadPrediction({ silent: true }));
 
   if (timeframe)
-    timeframe.addEventListener("change", async () => {
-      await loadSymbols({ keepSymbol: true });
-      loadPrediction({ silent: true });
-    });
+    timeframe.addEventListener("change",
+      async () => {
+        await loadSymbols({ keepSymbol: true });
+        loadPrediction({ silent: true });
+      });
 
   if (symbolSearch) {
-    symbolSearch.addEventListener("input", function () {
 
-      const keyword = this.value.trim().toUpperCase();
+    symbolSearch.addEventListener("input",
+      function () {
 
-      if (!keyword) {
-        renderSymbolOptions(ALL_SYMBOLS);
-        return;
-      }
+        const keyword =
+          this.value.trim().toUpperCase();
 
-      const filtered = ALL_SYMBOLS.filter(c =>
-        c.symbol.toUpperCase().includes(keyword) ||
-       (c.name && c.name.toUpperCase().includes(keyword))
-     );
+        if (!keyword) {
+          renderSymbolOptions(ALL_SYMBOLS);
+          return;
+        }
 
-      if (filtered.length === 0) {
-        renderSymbolOptions([]);
-        return;
-       }
+        const filtered =
+          ALL_SYMBOLS.filter(c =>
+            c.symbol.toUpperCase().includes(keyword) ||
+            (c.name &&
+             c.name.toUpperCase().includes(keyword))
+          );
 
-      CURRENT_SYMBOL = filtered[0].symbol;
+        if (filtered.length === 0) {
+          renderSymbolOptions([]);
+          return;
+        }
 
-    renderSymbolOptions(filtered);
-  });
-}
+        CURRENT_SYMBOL = filtered[0].symbol;
+
+        renderSymbolOptions(filtered);
+      });
+  }
 
   await loadSymbols({ keepSymbol: false });
 
-  setTimeout(() => loadPrediction({ silent: true }), 300);
+  setTimeout(() =>
+    loadPrediction({ silent: true }), 300);
 
   setInterval(() => {
     if (document.visibilityState === "visible") {

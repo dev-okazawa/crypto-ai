@@ -10,7 +10,8 @@ from fastapi.templating import Jinja2Templates
 
 from ai.src.predict import predict
 from ai.src.dto import build_prediction_dto
-from ai.src.market_cap import get_supported, load_trained_symbols
+from ai.src.market_cap import get_supported
+from ai.src.repository.db import get_connection
 
 
 # =====================
@@ -23,19 +24,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 CACHE_DIR = BASE_DIR / "ai" / "data" / "cache"
 LOG_DIR = BASE_DIR / "logs"
 
-
-# =====================
-# Templates
-# =====================
-
 templates = Jinja2Templates(
     directory=str(BASE_DIR / "api" / "templates")
 )
-
-
-# =====================
-# Static
-# =====================
 
 app.mount(
     "/static",
@@ -66,15 +57,105 @@ def seo_context(
 
 
 # =====================
-# HTML Pages
+# Health Check
+# =====================
+
+@app.get("/health")
+def health():
+    return {
+        "status": "ok",
+        "time": datetime.now(timezone.utc).isoformat()
+    }
+
+
+# =====================
+# INDEX (完全修正版)
+# =====================
+
+# =====================
+# INDEX (SORT対応版)
 # =====================
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
+
+    interval = "1h"
+    sort = request.query_params.get("sort")
+
+    path = CACHE_DIR / f"market_overview_{interval}.json"
+    coins = []
+
+    # 🔥 predictionと同じ並び取得
+    supported = get_supported(interval)
+    symbol_order = {c["symbol"]: i for i, c in enumerate(supported)}
+
+    if path.exists():
+        try:
+            data = json.loads(path.read_text())
+            items = data.get("items", [])
+
+            for item in items:
+
+                data_block = item.get("data") or {}
+                metrics = data_block.get("metrics") or {}
+                prices = data_block.get("prices") or {}
+                meta = item.get("meta") or {}
+
+                past = prices.get("past") or []
+                if not past:
+                    continue
+
+                symbol_full = meta.get("symbol") or data_block.get("symbol") or ""
+                base_symbol = symbol_full.replace("USDT", "")
+
+                current_price = float(metrics.get("current", past[-1]))
+                predicted_price = float(metrics.get("predicted", current_price))
+
+                diff = float(metrics.get("diff", 0))
+                pct_change = float(metrics.get("pct_change", 0))
+
+                coins.append({
+                    "name": base_symbol,
+                    "symbol": symbol_full,
+                    "image": item.get("image") or "",
+                    "current_price": current_price,
+                    "predicted_price": predicted_price,
+                    "change": diff,
+                    "change_percent": pct_change,
+                    "trend": [float(x) for x in past[-30:]]
+                })
+
+        except Exception as e:
+            print("INDEX LOAD ERROR:", e)
+
+    # =====================
+    # 🔥 ソートロジック
+    # =====================
+
+    if sort == "change_desc":
+        coins.sort(key=lambda x: x["change_percent"], reverse=True)
+
+    elif sort == "change_asc":
+        coins.sort(key=lambda x: x["change_percent"])
+
+    elif sort == "marketcap_desc" or sort is None:
+        # 🔥 predictionと同じ順
+        coins.sort(key=lambda x: symbol_order.get(x["symbol"], 9999))
+
+    elif sort == "marketcap_asc":
+        coins.sort(
+            key=lambda x: symbol_order.get(x["symbol"], 9999),
+            reverse=True
+        )
+
+    # =====================
+
     return templates.TemplateResponse(
         "index.html",
         {
             "request": request,
+            "coins": coins,
+            "current_sort": sort or "marketcap_desc",
             **seo_context(
                 title="Crypto AI Prediction",
                 description="Crypto AI Prediction platform",
@@ -84,9 +165,38 @@ def index(request: Request):
         },
     )
 
+# =====================
+# Prediction Page
+# =====================
+
+@app.get("/prediction", response_class=HTMLResponse)
+def prediction_page(
+    request: Request,
+    symbol: str = Query(None)
+):
+
+    return templates.TemplateResponse(
+        "prediction.html",
+        {
+            "request": request,
+            "initial_symbol": symbol or "",
+            **seo_context(
+                title="Prediction | Crypto AI",
+                description="AI crypto price prediction",
+                keywords="crypto prediction ai",
+                canonical="https://cryptoaipredict.com/prediction",
+            ),
+        },
+    )
+
+
+# =====================
+# Visualize Page
+# =====================
 
 @app.get("/visualize", response_class=HTMLResponse)
-def visualize(request: Request):
+def visualize_page(request: Request):
+
     return templates.TemplateResponse(
         "visualize.html",
         {
@@ -100,6 +210,10 @@ def visualize(request: Request):
         },
     )
 
+
+# =====================
+# Static Pages
+# =====================
 
 @app.get("/about", response_class=HTMLResponse)
 def about(request: Request):
@@ -199,7 +313,7 @@ def api_predict(
 # =====================
 
 @app.get("/symbols")
-def api_symbols(interval: str = "1h"):
+def api_symbols(interval: str = Query("1h")):
     try:
         return get_supported(interval)
     except Exception as e:
@@ -210,39 +324,30 @@ def api_symbols(interval: str = "1h"):
 
 
 # =====================
-# Market Overview API (interval対応)
+# Market Overview API
 # =====================
 
 @app.get("/api/market-overview")
 def api_market_overview(
     interval: str = Query("1h"),
-    limit: int = Query(10, ge=1, le=200),
+    limit: int = Query(20, ge=1, le=200)
 ):
+
+    path = CACHE_DIR / f"market_overview_{interval}.json"
+
+    if not path.exists():
+        return JSONResponse(
+            status_code=503,
+            content={"error": "Market overview cache not ready"},
+        )
+
     try:
-        allowed = {"1h", "1d", "1w"}
-
-        if interval not in allowed:
-            return JSONResponse(
-                status_code=400,
-                content={"error": "invalid interval"},
-            )
-
-        path = CACHE_DIR / f"market_overview_{interval}.json"
-
-        if not path.exists():
-            return JSONResponse(
-                status_code=503,
-                content={"error": f"{interval} cache not ready"},
-            )
-
         data = json.loads(path.read_text())
+        items = data.get("items", [])[:limit]
 
         return {
-            "items": data.get("items", [])[:limit],
-            "meta": {
-                **data.get("meta", {}),
-                "interval": interval,
-            },
+            "items": items,
+            "meta": data.get("meta", {}),
         }
 
     except Exception as e:
@@ -253,114 +358,8 @@ def api_market_overview(
 
 
 # =====================
-# Stats API
-# =====================
-
-@app.get("/api/stats")
-def api_stats():
-    try:
-        supported = get_supported("1h")
-        supported_count = len(supported)
-        supported_error = None
-    except Exception as e:
-        supported_count = 0
-        supported_error = str(e)
-
-    try:
-        trained = load_trained_symbols()
-        trained_count = len(trained)
-    except Exception:
-        trained_count = 0
-
-    overview_path = CACHE_DIR / "market_overview_1h.json"
-    overview_ready = 0
-    overview_generated_at = None
-
-    if overview_path.exists():
-        try:
-            data = json.loads(overview_path.read_text())
-            overview_ready = len(data.get("items", []))
-            overview_generated_at = data.get("meta", {}).get("generated_at")
-        except Exception:
-            pass
-
-    cron_ok = (LOG_DIR / "cron_health.log").exists()
-
-    return {
-        "symbols": {
-            "supported": supported_count,
-            "trained_models": trained_count,
-            "overview_ready": overview_ready,
-        },
-        "training": {
-            "interval": "1h",
-            "max_symbols": 200,
-        },
-        "system": {
-            "cron_status": "ok" if cron_ok else "unknown",
-            "checked_at": datetime.now(timezone.utc).isoformat(),
-        },
-        "debug": {
-            "supported_error": supported_error,
-            "overview_generated_at": overview_generated_at,
-        },
-    }
-
-
-# =====================
-# Sitemap
-# =====================
-
-@app.get("/sitemap.xml", response_class=Response)
-def sitemap():
-
-    base_url = "https://cryptoaipredict.com"
-
-    urls = [
-        "",
-        "/visualize",
-        "/about",
-        "/privacy",
-        "/terms",
-        "/contact",
-    ]
-
-    xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
-    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
-
-    for path in urls:
-        xml += "  <url>\n"
-        xml += f"    <loc>{base_url}{path}</loc>\n"
-        xml += "  </url>\n"
-
-    xml += "</urlset>"
-
-    return Response(content=xml, media_type="application/xml")
-
-
-# =====================
-# Robots.txt
-# =====================
-
-@app.get("/robots.txt", response_class=Response)
-def robots():
-
-    content = """User-agent: *
-Allow: /
-
-Sitemap: https://cryptoaipredict.com/sitemap.xml
-"""
-
-    return Response(content=content, media_type="text/plain")
-
-
-
-# =====================
 # Accuracy API
 # =====================
-
-from ai.src.repository.db import get_connection
-
 
 @app.get("/accuracy")
 def get_accuracy(
@@ -402,22 +401,12 @@ def get_accuracy(
     conn.close()
 
     if not row:
-        return {
-            "status": "ok",
-            "accuracy": None,
-            "mae": None,
-            "total": 0
-        }
+        return {"status": "ok", "accuracy": None, "mae": None, "total": 0}
 
     wins, total, mae = row
 
     if not total:
-        return {
-            "status": "ok",
-            "accuracy": None,
-            "mae": None,
-            "total": 0
-        }
+        return {"status": "ok", "accuracy": None, "mae": None, "total": 0}
 
     accuracy = round(wins / total * 100, 2)
     mae = round(mae, 2) if mae is not None else None

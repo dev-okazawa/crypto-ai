@@ -5,13 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <title>{{ title }}</title>
-
   <link rel="canonical" href="{{ canonical }}" />
 
   {% include "partials/seo.html" %}
+
+  <!-- 共通CSS -->
   <link rel="stylesheet" href="/static/css/style.css">
   <link rel="stylesheet" href="/static/css/common.css">
   <link rel="stylesheet" href="/static/css/cookie.css">
+
+  <!-- 🔥 ページ専用CSS -->
+  {% block page_css %}{% endblock %}
 
   <!-- Google Tag Manager -->
   <script>
@@ -32,15 +36,16 @@
 
   <noscript>
     <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MZMCL58Z"
-    height="0" width="0" style="display:none;visibility:hidden"></iframe>
+      height="0" width="0"
+      style="display:none;visibility:hidden">
+    </iframe>
   </noscript>
 
   <div class="app-wrapper">
 
     {% include "partials/header.html" %}
 
-    {% block content %}
-    {% endblock %}
+    {% block content %}{% endblock %}
 
     {% include "partials/footer.html" %}
 
@@ -52,25 +57,21 @@
       <span>
         We use cookies to improve your experience and analyze traffic.<br>
         By clicking "Accept", you consent to our use of cookies and similar technologies as described in our
-        <a href="/privacy" target="_self" rel="noopener">
-          Privacy Policy
-        </a>.
+        <a href="/privacy">Privacy Policy</a>.
       </span>
       <div class="cookie-buttons">
-        <button id="acceptCookies" class="cookie-btn accept">
-          Accept
-        </button>
-        <button id="declineCookies" class="cookie-btn decline">
-          Decline
-        </button>
+        <button id="acceptCookies" class="cookie-btn accept">Accept</button>
+        <button id="declineCookies" class="cookie-btn decline">Decline</button>
       </div>
     </div>
   </div>
 
-  <script src="/static/js/predictionChart.js"></script>
-  <script src="/static/js/app.js"></script>
+  <!-- 共通JS -->
   <script src="/static/js/common.js"></script>
   <script src="/static/js/cookie.js"></script>
+
+  <!-- 🔥 ページ専用JS（1回だけ！） -->
+  {% block page_scripts %}{% endblock %}
 
 </body>
 </html>

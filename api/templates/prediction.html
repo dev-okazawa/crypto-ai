@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block page_css %}
+<link rel="stylesheet" href="/static/css/prediction.css">
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+  <div class="card">
+
+    <h1 class="content_name">Prediction</h1>
+
+    <!-- Market Ranking -->
+    <a href="/visualize" class="nav-button">
+      📈 View Market Ranking
+    </a>
+
+    <!-- Symbol search -->
+    <label for="symbolSearch">Search Symbol</label>
+    <input
+      type="text"
+      id="symbolSearch"
+      placeholder="e.g. BTC, ETH, SOL"
+      autocomplete="off"
+    />
+
+    <!-- Symbol selector -->
+    <label for="symbol">Symbol</label>
+    <select id="symbol"></select>
+
+    <!-- Timeframe -->
+    <label for="timeframe">Prediction Timeframe</label>
+    <select id="timeframe">
+      <option value="1h">1 Hour (Short-term)</option>
+      <option value="1d">1 Day (Daily)</option>
+      <option value="1w">1 Week (7 Days)</option>
+    </select>
+
+    <!-- Action -->
+    <button id="predictBtn">Get Prediction</button>
+
+    <!-- Prediction Result -->
+    <div id="result" class="result">
+
+      <div id="symbolHeader" class="symbol-header" style="display:none;">
+        <img id="symbolLogo" class="coin-logo-large" alt="logo">
+        <h2 id="symbolTitle" class="symbol-title-text"></h2>
+      </div>
+
+      <div class="result-row">
+        <span class="result-label">Current Price (Model)</span>
+        <span id="curPrice">—</span>
+      </div>
+
+      <div class="result-row">
+        <span class="result-label">Predicted Price</span>
+        <span id="predPrice">—</span>
+      </div>
+
+      <div class="result-row">
+        <span class="result-label">Price Change</span>
+        <span id="priceChange">—</span>
+      </div>
+
+      <div class="result-row confidence-row">
+        <span class="result-label">Confidence</span>
+        <div class="confidence-bar">
+          <div class="confidence-fill" id="confidenceFill"></div>
+        </div>
+        <span id="confidenceText">—</span>
+      </div>
+
+      <div class="result-row accuracy-row">
+        <span class="result-label">Model Accuracy</span>
+        <div class="accuracy-bar">
+          <div id="accuracyFill" class="accuracy-fill"></div>
+        </div>
+        <span id="accuracyText">--%</span>
+      </div>
+
+      <div class="result-row">
+        <span class="result-label">MAE</span>
+        <span id="maeText">--%</span>
+      </div>
+
+      <div class="result-row">
+        <span class="result-label">Last Updated (UTC)</span>
+        <span id="updatedAt">—</span>
+      </div>
+    </div>
+
+    <!-- Prediction Chart -->
+    <div class="market-snapshot">
+      <h2 class="snapshot-title">Prediction Chart</h2>
+      <div id="snapshotContainer" class="prediction-chart mini">
+        <p style="opacity:.6">
+          Select a symbol and run prediction
+        </p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}
+
+{% block page_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="/static/js/prediction.js"></script>
+<script src="/static/js/predictionChart.js"></script>
+{% endblock %}

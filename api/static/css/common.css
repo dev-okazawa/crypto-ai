@@ -258,3 +258,24 @@ body {
 .footer-grid a:hover {
   color: #ffffff;
 }
+
+.zero-count {
+  font-size: 0.65em;
+  position: relative;
+  bottom: -0.25em;
+  opacity: 0.7;
+}
+
+.up {
+  color: #22c55e; /* 緑 */
+  font-weight: 600;
+}
+
+.down {
+  color: #ef4444; /* 赤 */
+  font-weight: 600;
+}
+
+.flat {
+  color: #94a3b8;
+}

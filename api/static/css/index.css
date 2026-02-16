@@ -1,0 +1,209 @@
+/* =====================
+   Index Page
+===================== */
+
+.index-wrapper {
+  max-width: 420px;
+  margin: 60px auto 0;
+  padding: 0;
+}
+
+/* =====================
+   Hero
+===================== */
+
+.index-hero {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.hero-image {
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+  display: block;
+  margin: 0 auto 16px;
+  border-radius: 16px;
+}
+
+.index-title {
+  font-size: 22px;
+  margin: 0;
+}
+
+.index-sub {
+  font-size: 13px;
+  opacity: 0.6;
+  margin-top: 6px;
+}
+
+/* =====================
+   Coin List
+===================== */
+
+.coin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* =====================
+   Card
+===================== */
+
+.coin-card {
+  background: rgba(255,255,255,0.03);
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  transition: transform 0.15s ease;
+}
+
+.coin-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.coin-link:active {
+  transform: scale(0.98);
+}
+
+/* =====================
+   Card Header
+===================== */
+
+.coin-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.coin-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.coin-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: contain;
+}
+
+.coin-name {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* =====================
+   Prices
+===================== */
+
+.coin-prices {
+  margin-bottom: 12px;
+}
+
+.price-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.label {
+  color: #94a3b8;
+}
+
+/* =====================
+   Mini Chart
+===================== */
+
+.mini-chart {
+  height: 60px;
+  width: 100%;
+  position: relative;
+}
+
+.mini-chart canvas {
+  width: 100% !important;
+  height: 60px !important;
+}
+
+/* 横レイアウト */
+.coin-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.coin-prices {
+  flex: 1;
+}
+
+.coin-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.coin-prices {
+  flex: 1;
+}
+
+.mini-chart {
+  width: 120px;
+  height: 50px;
+}
+
+.sort-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.sort-btn {
+  padding: 6px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.05);
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.sort-btn.active {
+  background: #2563eb;
+  color: white;
+}
+
+/* =========================
+   Sort Bar Layout
+========================= */
+
+.sort-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  width: 100%;
+}
+
+.sort-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size:12px;
+  width: 100%;
+  padding: 12px 6px;
+
+  background: #0f172a;
+  border-radius: 6px;
+
+  text-decoration: none;
+  color: #cbd5e1;
+
+  transition: all 0.2s ease;
+}

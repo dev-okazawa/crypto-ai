@@ -3,6 +3,7 @@
 // ===============================
 function normalizePrices(data, chartWidth, chartHeight, min, max, minTime, maxTime) {
   return data.map(point => {
+
     const x =
       ((point.time - minTime) / (maxTime - minTime || 1)) *
       chartWidth;
@@ -16,8 +17,10 @@ function normalizePrices(data, chartWidth, chartHeight, min, max, minTime, maxTi
   });
 }
 
+
 // ===============================
 function formatTime(ts, interval) {
+
   const d = new Date(ts);
 
   if (interval === "1d" || interval === "1w") {
@@ -27,48 +30,80 @@ function formatTime(ts, interval) {
   return `${String(d.getUTCHours()).padStart(2, "0")}:00`;
 }
 
+
 // ===============================
-// 🔥 小数ゼロ圧縮フォーマット
+// Y軸ラベル（SVG専用 sub対応）
 // ===============================
-function formatCompressedPrice(value) {
+function buildYLabel(value, yPos, margin, isMini) {
 
   const abs = Math.abs(value);
 
-  if (abs >= 1000) {
-    return value.toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
-  }
-
+  // 1以上
   if (abs >= 1) {
-    return value.toFixed(2);
+    return `
+      <text x="${margin.left - 10}" 
+            y="${yPos}"
+            text-anchor="end"
+            font-size="${isMini ? 10 : 14}"
+            fill="#ffffff">
+        ${value.toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        })}
+      </text>
+    `;
   }
 
+  // 0.01以上
   if (abs >= 0.01) {
-    return value.toFixed(4);
+    return `
+      <text x="${margin.left - 10}" 
+            y="${yPos}"
+            text-anchor="end"
+            font-size="${isMini ? 10 : 14}"
+            fill="#ffffff">
+        ${value.toFixed(4)}
+      </text>
+    `;
   }
 
-  // 🔥 小さい値はカードと同じロジック
-  const str = value.toFixed(12);  // 少し余裕持たせる
-
+  // 超小数
+  const str = abs.toFixed(12);
   const match = str.match(/^0\.0+/);
 
   if (!match) {
-    return value.toFixed(6);
+    return `
+      <text x="${margin.left - 10}" 
+            y="${yPos}"
+            text-anchor="end"
+            font-size="${isMini ? 10 : 14}"
+            fill="#ffffff">
+        ${value.toFixed(6)}
+      </text>
+    `;
   }
 
   const zeroCount = match[0].length - 2;
 
-  // 🔥 有効数字を最大4桁に制限
-  const significantRaw = str.slice(match[0].length);
-  const significant = significantRaw.replace(/0+$/, "").slice(0, 4);
+  let significant = str.slice(match[0].length);
+  significant = significant.replace(/0+$/, "").slice(0, 4);
 
-  return {
-    zeroCount,
-    significant
-  };
+  return `
+    <text x="${margin.left - 10}" 
+          y="${yPos}"
+          text-anchor="end"
+          font-size="${isMini ? 10 : 14}"
+          fill="#ffffff">
+      0.0
+      <tspan baseline-shift="sub"
+             font-size="${isMini ? 8 : 10}">
+        ${zeroCount}
+      </tspan>
+      ${significant}
+    </text>
+  `;
 }
+
 
 // ===============================
 function renderPredictionChart({ chart, diff, interval = "1h", mode = "full" }) {
@@ -83,8 +118,8 @@ function renderPredictionChart({ chart, diff, interval = "1h", mode = "full" }) 
   const height = isMini ? 150 : 300;
 
   const margin = isMini
-  ? { top: 5, right: 20, bottom: 25, left: 55 }
-  : { top: 10, right: 30, bottom: 35, left: 75 };
+    ? { top: 5, right: 20, bottom: 25, left: 55 }
+    : { top: 10, right: 30, bottom: 35, left: 75 };
 
   const chartWidth = width - margin.left - margin.right;
   const chartHeight = height - margin.top - margin.bottom;
@@ -176,28 +211,7 @@ function renderPredictionChart({ chart, diff, interval = "1h", mode = "full" }) 
   }
 
   xTicks.push(candleTimes[candleTimes.length - 1]);
-
   xTicks = [...new Set(xTicks)];
-
-  if (xTicks.length >= 2) {
-
-    const last = xTicks[xTicks.length - 1];
-    const prev = xTicks[xTicks.length - 2];
-
-    const lastXPos =
-      margin.left +
-      ((last - minTime) / (maxTime - minTime || 1)) *
-      chartWidth;
-
-    const prevXPos =
-      margin.left +
-      ((prev - minTime) / (maxTime - minTime || 1)) *
-      chartWidth;
-
-    if (Math.abs(lastXPos - prevXPos) < (isMini ? 40 : 60)) {
-      xTicks.splice(xTicks.length - 2, 1);
-    }
-  }
 
   const xLabels = xTicks.map((t, index) => {
 
@@ -221,35 +235,8 @@ function renderPredictionChart({ chart, diff, interval = "1h", mode = "full" }) 
   }).join("");
 
   // ===============================
-  // Y軸（ゼロ圧縮対応）
+  // Y軸
   // ===============================
-  function buildYLabel(value, yPos) {
-
-    const formatted = formatCompressedPrice(value);
-
-    if (typeof formatted === "string") {
-      return `
-        <text x="${margin.left - 10}" y="${yPos}"
-              text-anchor="end"
-              font-size="${isMini ? 10 : 14}"
-              fill="#ffffff">
-          ${formatted}
-        </text>
-      `;
-    }
-
-    return `
-      <text x="${margin.left - 10}" y="${yPos}"
-            text-anchor="end"
-            font-size="${isMini ? 10 : 14}"
-            fill="#ffffff">
-        0.0<tspan dy="3" font-size="${isMini ? 8 : 10}">
-          ${formatted.zeroCount}
-        </tspan>${formatted.significant}
-      </text>
-    `;
-  }
-
   const yMin = margin.top + chartHeight;
   const yMid = margin.top + chartHeight / 2;
   const yMax = margin.top;
@@ -267,9 +254,9 @@ function renderPredictionChart({ chart, diff, interval = "1h", mode = "full" }) 
           x2="${margin.left + chartWidth}" y2="${yMin}"
           stroke="#1f2937"/>
 
-    ${buildYLabel(max, yMax + 5)}
-    ${buildYLabel(mid, yMid + 5)}
-    ${buildYLabel(min, yMin + 5)}
+    ${buildYLabel(max, yMax + 5, margin, isMini)}
+    ${buildYLabel(mid, yMid + 5, margin, isMini)}
+    ${buildYLabel(min, yMin + 5, margin, isMini)}
   `;
 
   return `

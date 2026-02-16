@@ -14,32 +14,9 @@ let CURRENT_MODE = "gainers";
 // Utils
 // =====================
 
-function formatUSD(price) {
-  const n = Number(price);
-  if (!Number.isFinite(n)) return "—";
-
-  if (n >= 1) {
-    return n.toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
-  }
-
-  if (n >= 0.01) {
-    return n.toLocaleString(undefined, {
-      minimumFractionDigits: 4,
-      maximumFractionDigits: 4
-    });
-  }
-
-  return n.toLocaleString(undefined, {
-    minimumFractionDigits: 6,
-    maximumFractionDigits: 6
-  });
-}
-
 function formatUTC(isoString) {
   if (!isoString) return null;
+
   const dt = new Date(isoString);
   if (isNaN(dt.getTime())) return null;
 
@@ -54,10 +31,12 @@ function formatUTC(isoString) {
 
 function formatPair(symbol) {
   if (!symbol) return "";
+
   if (symbol.endsWith("USDT")) {
     const base = symbol.replace("USDT", "");
     return `${base} / USDT`;
   }
+
   return symbol;
 }
 
@@ -70,6 +49,7 @@ function sortItems(items) {
   return [...items]
     .filter(item => item?.data?.metrics)
     .sort((a, b) => {
+
       const pctA = a.data.metrics.pct_change ?? 0;
       const pctB = b.data.metrics.pct_change ?? 0;
 
@@ -149,7 +129,7 @@ function renderCard(item, index) {
     </div>
 
     <div class="price-change ${colorClass}">
-      ${pct_change > 0 ? "+" : ""}${pct_change.toFixed(2)}%
+      ${formatDiff(diff, pct_change)}
     </div>
 
     <div class="mini-chart">
@@ -291,6 +271,7 @@ function handleSearch() {
 // =====================
 
 function setMode(mode) {
+
   CURRENT_MODE = mode;
 
   document.getElementById("btnGainers")?.classList.remove("active");
