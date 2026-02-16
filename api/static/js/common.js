@@ -62,6 +62,10 @@ function formatSmallNumber(price) {
 }
 
 
+/* =========================================
+   USD Format
+========================================= */
+
 function formatUSD(price) {
 
   const n = Number(price);
@@ -69,9 +73,13 @@ function formatUSD(price) {
 
   const sign = n < 0 ? "-" : "";
 
-  return sign + "USD " + formatSmallNumber(Math.abs(n));
+  return `USD ${sign}${formatSmallNumber(Math.abs(n))}`;
 }
 
+
+/* =========================================
+   Diff Format（USD + 形式）
+========================================= */
 
 function formatDiff(diff, pct) {
 
@@ -79,7 +87,7 @@ function formatDiff(diff, pct) {
   const diffAbs = Math.abs(diff);
   const pctAbs = Math.abs(pct);
 
-  return `${sign}$${formatSmallNumber(diffAbs)} (${sign}${pctAbs.toFixed(2)}%)`;
+  return `USD ${sign}${formatSmallNumber(diffAbs)} (${sign}${pctAbs.toFixed(2)}%)`;
 }
 
 
@@ -91,10 +99,12 @@ function applyPriceFormatting() {
 
   document.querySelectorAll(".price").forEach(el => {
     const value = el.dataset.price;
+    if (!value) return;
     el.innerHTML = formatUSD(value);
   });
 
   document.querySelectorAll(".change").forEach(el => {
+
     const diff = Number(el.dataset.diff);
     const pct = Number(el.dataset.pct);
 

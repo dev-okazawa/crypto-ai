@@ -74,37 +74,3 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
 });
-
-
-function formatUSD(value) {
-  const num = Number(value);
-  if (!num || isNaN(num)) return "$0.00";
-
-  if (num >= 1) {
-    return "$" + num.toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
-  }
-
-  const str = num.toFixed(12);
-
-  const decimal = str.split('.')[1];
-  const zeroMatch = decimal.match(/^0+/);
-
-  if (!zeroMatch) {
-    return "$" + num.toFixed(6);
-  }
-
-  const zeroCount = zeroMatch[0].length;
-  const significant = decimal.slice(zeroCount, zeroCount + 4);
-
-  return `$0.0<sub class="zero-count">${zeroCount}</sub>${significant}`;
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll(".price").forEach(el => {
-    const price = el.dataset.price;
-    el.innerHTML = formatUSD(price);
-  });
-});

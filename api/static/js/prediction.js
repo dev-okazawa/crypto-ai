@@ -136,8 +136,20 @@ async function loadPrediction() {
     document.getElementById("predPrice").innerHTML =
       formatUSD(m.predicted);
 
-    document.getElementById("priceChange").innerHTML =
-      formatDiff(m.diff, m.pct_change);
+    const priceChangeEl = document.getElementById("priceChange");
+
+    if (priceChangeEl) {
+
+      const direction =
+        m.diff > 0 ? "up" :
+        m.diff < 0 ? "down" :
+        "flat";
+
+       priceChangeEl.innerHTML =
+    `    <span class="${direction}">
+         ${formatDiff(m.diff, m.pct_change)}
+        </span>`;
+    }
 
     // ===============================
     // Last Updated
