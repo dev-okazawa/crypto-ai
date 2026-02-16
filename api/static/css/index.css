@@ -198,12 +198,35 @@
   font-size:12px;
   width: 100%;
   padding: 12px 6px;
-
   background: #0f172a;
   border-radius: 6px;
-
   text-decoration: none;
   color: #cbd5e1;
-
   transition: all 0.2s ease;
+}
+
+.index-topbar {
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.top-right {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  text-align:right;
+}
+
+.nav-button {
+  display: block;
+    margin: 16px 0 20px;
+    padding: 14px;
+    text-align: center;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #6366f1, #22c55e);
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 15px;
+    text-decoration: none;
+}
 }

@@ -8,29 +8,68 @@
 
 <div class="container index-wrapper">
 
+  <!-- ===================== -->
+  <!-- 🔥 Top Bar -->
+  <!-- ===================== -->
+
+  <div class="index-topbar">
+
+    <div class="top-left">
+      <a href="/prediction" class="nav-button">
+        🔮 Prediction
+      </a>
+    </div>
+
+    <div class="top-right">
+      {% if last_updated %}
+        <span class="updated-label">
+          Last Updated (UTC)
+        </span>
+        <span class="updated-time">
+          {{ last_updated[:16].replace("T", " ") }}
+        </span>
+      {% endif %}
+    </div>
+
+  </div>
+
+
+  <!-- ===================== -->
+  <!-- 🔥 Sort Buttons -->
+  <!-- ===================== -->
+
   <div class="sort-bar">
 
+    <!-- 大きい順 -->
     <a href="/?sort=marketcap_desc"
        class="sort-btn {% if current_sort == 'marketcap_desc' %}active{% endif %}">
        MarketCap ↑
     </a>
 
+    <!-- 小さい順 -->
     <a href="/?sort=marketcap_asc"
        class="sort-btn {% if current_sort == 'marketcap_asc' %}active{% endif %}">
        MarketCap ↓
     </a>
 
+    <!-- 上昇順 -->
     <a href="/?sort=change_desc"
        class="sort-btn {% if current_sort == 'change_desc' %}active{% endif %}">
        Change ↑
     </a>
 
+    <!-- 下降順 -->
     <a href="/?sort=change_asc"
        class="sort-btn {% if current_sort == 'change_asc' %}active{% endif %}">
        Change ↓
     </a>
 
   </div>
+
+
+  <!-- ===================== -->
+  <!-- 🔥 Coin List -->
+  <!-- ===================== -->
 
   <div class="coin-list">
 
@@ -45,6 +84,7 @@
             <img src="{{ coin.image or '/static/img/default.png' }}"
                  alt="{{ coin.symbol }}"
                  class="coin-icon">
+
             <div class="coin-name">
               {{ coin.name }}
               <span class="muted">/USDT</span>
@@ -74,12 +114,10 @@
             <!-- Change -->
             <div class="price-row">
               <span class="label">Change</span>
-
               <span class="change"
                     data-diff="{{ coin.change }}"
                     data-pct="{{ coin.change_percent }}">
               </span>
-
             </div>
 
           </div>
@@ -101,6 +139,7 @@
 </div>
 
 {% endblock %}
+
 
 {% block page_scripts %}
 

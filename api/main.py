@@ -67,13 +67,8 @@ def health():
         "time": datetime.now(timezone.utc).isoformat()
     }
 
-
 # =====================
-# INDEX (完全修正版)
-# =====================
-
-# =====================
-# INDEX (SORT対応版)
+# INDEX (SORT対応 + LastUpdated)
 # =====================
 
 @app.get("/", response_class=HTMLResponse)
@@ -84,6 +79,7 @@ def index(request: Request):
 
     path = CACHE_DIR / f"market_overview_{interval}.json"
     coins = []
+    generated_at = None  # 🔥 追加
 
     # 🔥 predictionと同じ並び取得
     supported = get_supported(interval)
@@ -92,6 +88,10 @@ def index(request: Request):
     if path.exists():
         try:
             data = json.loads(path.read_text())
+
+            # 🔥 ここで取得
+            generated_at = data.get("meta", {}).get("generated_at")
+
             items = data.get("items", [])
 
             for item in items:
@@ -138,15 +138,16 @@ def index(request: Request):
     elif sort == "change_asc":
         coins.sort(key=lambda x: x["change_percent"])
 
-    elif sort == "marketcap_desc" or sort is None:
-        # 🔥 predictionと同じ順
-        coins.sort(key=lambda x: symbol_order.get(x["symbol"], 9999))
-
     elif sort == "marketcap_asc":
         coins.sort(
             key=lambda x: symbol_order.get(x["symbol"], 9999),
             reverse=True
         )
+
+    else:
+        # 🔥 デフォルト（時価総額 大きい順）
+        coins.sort(key=lambda x: symbol_order.get(x["symbol"], 9999))
+        sort = "marketcap_desc"
 
     # =====================
 
@@ -155,7 +156,8 @@ def index(request: Request):
         {
             "request": request,
             "coins": coins,
-            "current_sort": sort or "marketcap_desc",
+            "current_sort": sort,
+            "last_updated": generated_at,  # 🔥 ここ重要
             **seo_context(
                 title="Crypto AI Prediction",
                 description="Crypto AI Prediction platform",
