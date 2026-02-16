@@ -22,10 +22,15 @@ function renderSymbolOptions(list) {
     if (!c || !c.symbol || !c.name) return;
 
     const opt = document.createElement("option");
+
+    // 🔥 これは絶対そのまま
     opt.value = c.symbol;
 
+    // 🔥 base をちゃんと作る
     const base = c.symbol.replace("USDT", "");
-    opt.textContent = `${c.name} ${base}`;
+
+    // 🔥 表示だけ変更
+    opt.textContent = `${c.name} ${base}/USDT`;
 
     select.appendChild(opt);
   });
@@ -116,7 +121,7 @@ async function loadPrediction() {
     if (header && logo && title) {
 
       const base = symbol.replace("USDT", "");
-      title.innerText = `${base} / USDT`;
+      title.innerText = `${base}/USDT`;
 
       if (symbolInfo && symbolInfo.image) {
         logo.src = symbolInfo.image;

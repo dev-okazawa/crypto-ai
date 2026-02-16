@@ -34,7 +34,7 @@ function formatPair(symbol) {
 
   if (symbol.endsWith("USDT")) {
     const base = symbol.replace("USDT", "");
-    return `${base} / USDT`;
+    return `${base}/USDT`;
   }
 
   return symbol;
