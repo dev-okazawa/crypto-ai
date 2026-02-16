@@ -254,3 +254,17 @@
   gap: 6px;
   flex-wrap: wrap;
 }
+
+.market-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.market-link:visited {
+  color: inherit;
+}
+
+.market-link:hover {
+  color: inherit;
+}

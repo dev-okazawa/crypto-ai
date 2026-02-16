@@ -90,8 +90,9 @@ function renderCard(item, index) {
 
   const isPick = index < 10 && CURRENT_MODE === "gainers";
 
-  const card = document.createElement("div");
-  card.className = "market-card";
+  const card = document.createElement("a");
+  card.href = `/prediction?symbol=${payload.symbol}`;
+  card.className = "market-card market-link";
 
   card.innerHTML = `
     <div class="card-header">
