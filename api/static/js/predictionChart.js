@@ -115,7 +115,7 @@ function renderPredictionChart({ chart, diff, interval = "1h", mode = "full" }) 
   const isMini = mode === "mini";
 
   const width = isMini ? 380 : 720;
-  const height = isMini ? 150 : 300;
+  const height = isMini ? 150 : 260;
 
   const margin = isMini
     ? { top: 5, right: 20, bottom: 25, left: 55 }
