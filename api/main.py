@@ -419,3 +419,75 @@ def get_accuracy(
         "mae": mae,
         "total": total
     }
+
+
+# =====================
+# Dynamic Sitemap
+# =====================
+
+from fastapi.responses import Response
+from datetime import datetime
+
+@app.get("/sitemap.xml", include_in_schema=False)
+def dynamic_sitemap():
+
+    base_url = "https://cryptoaipredict.com"
+    urls = []
+
+    # =====================
+    # ① FastAPIルートから自動取得
+    # =====================
+    for route in app.routes:
+        if hasattr(route, "path"):
+            path = route.path
+
+            # 除外対象
+            if (
+                path.startswith("/api")
+                or path.startswith("/static")
+                or path.startswith("/health")
+                or path.startswith("/docs")
+                or path.startswith("/redoc")
+                or path.startswith("/openapi")
+                or path in ["/predict", "/symbols", "/accuracy"]
+                or "{" in path  # パラメータ付き除外
+                or path == "/sitemap.xml"
+            ):
+                continue
+
+            urls.append(f"{base_url}{path}")
+
+    # =====================
+    # ② 銘柄ページを自動追加
+    # =====================
+    try:
+        supported = get_supported("1h")
+        for coin in supported:
+            symbol = coin.get("symbol")
+            if symbol:
+                urls.append(f"{base_url}/prediction?symbol={symbol}")
+    except Exception as e:
+        print("SITEMAP SYMBOL LOAD ERROR:", e)
+
+    # =====================
+    # ③ XML生成
+    # =====================
+    now = datetime.utcnow().strftime("%Y-%m-%d")
+
+    xml_items = ""
+    for url in sorted(set(urls)):  # 重複除去＋ソート
+        xml_items += f"""
+    <url>
+        <loc>{url}</loc>
+        <lastmod>{now}</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+    </url>"""
+
+    xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+{xml_items}
+</urlset>
+"""
+
+    return Response(content=xml.strip(), media_type="application/xml")
