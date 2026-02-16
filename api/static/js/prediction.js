@@ -151,8 +151,7 @@ async function loadPrediction() {
         "flat";
 
        priceChangeEl.innerHTML =
-    `    <span class="${direction}">
-         ${formatDiff(m.diff, m.pct_change)}
+    `    <span class="${direction}">${formatDiff(m.diff, m.pct_change)}
         </span>`;
     }
 

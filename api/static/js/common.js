@@ -83,7 +83,7 @@ function formatUSD(price) {
 
 function formatDiff(diff, pct) {
 
-  const sign = diff > 0 ? "+" : diff < 0 ? "-" : "";
+  const sign = diff > 0 ? "+" : diff < 0 ? "-" : "";  
   const diffAbs = Math.abs(diff);
   const pctAbs = Math.abs(pct);
 
