@@ -1,8 +1,15 @@
-let ALL_SYMBOLS = [];
+// ===============================
+// State
+// ===============================
 
-/* ===============================
-   Render Symbol Options
-================================ */
+let ALL_SYMBOLS = [];
+let CURRENT_SYMBOL = null;
+
+
+// ===============================
+// Render Symbol Options
+// ===============================
+
 function renderSymbolOptions(list) {
 
   const select = document.getElementById("symbol");
@@ -22,22 +29,39 @@ function renderSymbolOptions(list) {
 
     select.appendChild(opt);
   });
+
+  if (CURRENT_SYMBOL) {
+    select.value = CURRENT_SYMBOL;
+  }
 }
 
-/* ===============================
-   Load Symbols
-================================ */
-async function loadSymbols() {
+
+// ===============================
+// Load Symbols（🔥 interval対応）
+// ===============================
+
+async function loadSymbols({ keepSymbol = true } = {}) {
 
   try {
 
-    const res = await fetch("/symbols?interval=1h");
+    const timeframeEl = document.getElementById("timeframe");
+    const interval = timeframeEl ? timeframeEl.value : "1h";
+
+    const prevSymbol = keepSymbol ? CURRENT_SYMBOL : null;
+
+    const res = await fetch(`/symbols?interval=${interval}`);
     if (!res.ok) return;
 
     const data = await res.json();
     if (!Array.isArray(data)) return;
 
     ALL_SYMBOLS = data;
+
+    if (prevSymbol && data.some(s => s.symbol === prevSymbol)) {
+      CURRENT_SYMBOL = prevSymbol;
+    } else {
+      CURRENT_SYMBOL = data[0]?.symbol || null;
+    }
 
     renderSymbolOptions(ALL_SYMBOLS);
 
@@ -46,21 +70,29 @@ async function loadSymbols() {
   }
 }
 
-/* ===============================
-   Load Prediction
-================================ */
+
+// ===============================
+// Load Prediction（🔥 interval対応）
+// ===============================
+
 async function loadPrediction() {
 
   const select = document.getElementById("symbol");
+  const timeframeEl = document.getElementById("timeframe");
+
   if (!select) return;
 
   const symbol = select.value;
   if (!symbol) return;
 
+  CURRENT_SYMBOL = symbol;
+
+  const interval = timeframeEl ? timeframeEl.value : "1h";
+
   try {
 
     const res = await fetch(
-      `/predict?symbol=${symbol}&interval=1h&horizon=1`
+      `/predict?symbol=${symbol}&interval=${interval}&horizon=1`
     );
 
     if (!res.ok) return;
@@ -71,7 +103,10 @@ async function loadPrediction() {
     const payload = response.data;
     const m = payload.metrics;
 
-    /* ===== 🔥 Symbol Header ===== */
+    // ===============================
+    // 🔥 Symbol Header
+    // ===============================
+
     const header = document.getElementById("symbolHeader");
     const logo = document.getElementById("symbolLogo");
     const title = document.getElementById("symbolTitle");
@@ -91,7 +126,9 @@ async function loadPrediction() {
       }
     }
 
-    /* ===== Prices ===== */
+    // ===============================
+    // Prices
+    // ===============================
 
     document.getElementById("curPrice").innerHTML =
       formatUSD(m.current);
@@ -102,16 +139,18 @@ async function loadPrediction() {
     document.getElementById("priceChange").innerHTML =
       formatDiff(m.diff, m.pct_change);
 
-    /* ===== Last Updated ===== */
+    // ===============================
+    // Last Updated
+    // ===============================
 
     const updatedEl = document.getElementById("updatedAt");
-
     if (updatedEl) {
-      updatedEl.innerText =
-        m.current_price_at || "—";
+      updatedEl.innerText = m.current_price_at || "—";
     }
 
-    /* ===== Confidence ===== */
+    // ===============================
+    // Confidence
+    // ===============================
 
     const confidence = Number(payload.confidence || 0);
 
@@ -124,11 +163,15 @@ async function loadPrediction() {
     if (confidenceText)
       confidenceText.innerText = confidence + "%";
 
-    /* ===== Accuracy ===== */
+    // ===============================
+    // Accuracy（🔥 interval対応）
+    // ===============================
 
-    loadAccuracy(symbol);
+    loadAccuracy(symbol, interval);
 
-    /* ===== Chart ===== */
+    // ===============================
+    // Chart
+    // ===============================
 
     if (
       payload.chart &&
@@ -144,7 +187,7 @@ async function loadPrediction() {
         container.innerHTML = renderPredictionChart({
           chart: payload.chart,
           diff: m.diff,
-          interval: payload.meta?.interval || "1h",
+          interval: payload.meta?.interval || interval,
           mode: "full"
         });
       }
@@ -155,15 +198,17 @@ async function loadPrediction() {
   }
 }
 
-/* ===============================
-   Accuracy API
-================================ */
-async function loadAccuracy(symbol) {
+
+// ===============================
+// Accuracy API（🔥 interval対応）
+// ===============================
+
+async function loadAccuracy(symbol, interval) {
 
   try {
 
     const res = await fetch(
-      `/accuracy?interval=1h&symbol=${symbol}`
+      `/accuracy?interval=${interval}&symbol=${symbol}`
     );
 
     if (!res.ok) return;
@@ -204,19 +249,23 @@ async function loadAccuracy(symbol) {
   }
 }
 
-/* ===============================
-   Init
-================================ */
+
+// ===============================
+// Init
+// ===============================
+
 document.addEventListener("DOMContentLoaded", async () => {
 
-  await loadSymbols();
+  await loadSymbols({ keepSymbol: false });
 
   const select = document.getElementById("symbol");
   const btn = document.getElementById("predictBtn");
-  const symbolSearch =
-    document.getElementById("symbolSearch");
+  const symbolSearch = document.getElementById("symbolSearch");
+  const timeframe = document.getElementById("timeframe");
 
-  /* URL symbol */
+  // ===============================
+  // URL ?symbol=
+  // ===============================
 
   const params = new URLSearchParams(window.location.search);
   const urlSymbol = params.get("symbol");
@@ -229,11 +278,15 @@ document.addEventListener("DOMContentLoaded", async () => {
       opt => opt.value.toUpperCase() === normalized
     );
 
-    if (exists)
+    if (exists) {
       select.value = normalized;
+      CURRENT_SYMBOL = normalized;
+    }
   }
 
-  /* Events */
+  // ===============================
+  // Events
+  // ===============================
 
   if (select)
     select.addEventListener("change", loadPrediction);
@@ -241,28 +294,41 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (btn)
     btn.addEventListener("click", loadPrediction);
 
+  if (timeframe)
+    timeframe.addEventListener("change", async () => {
+      await loadSymbols({ keepSymbol: true });
+      loadPrediction();
+    });
+
   if (symbolSearch) {
 
-    symbolSearch.addEventListener("input", function () {
+     symbolSearch.addEventListener("input", function () {
 
-      const keyword =
-        this.value.trim().toUpperCase();
+       const keyword =
+         this.value.trim().toUpperCase();
 
-      if (!keyword) {
-        renderSymbolOptions(ALL_SYMBOLS);
-        return;
-      }
+       if (!keyword) {
+         renderSymbolOptions(ALL_SYMBOLS);
+         return;
+        }
 
-      const filtered = ALL_SYMBOLS.filter(c =>
-        c.symbol.toUpperCase().includes(keyword) ||
-        (c.name &&
-         c.name.toUpperCase().includes(keyword))
-      );
+       const filtered = ALL_SYMBOLS.filter(c =>
+         c.symbol.toUpperCase().includes(keyword) ||
+         (c.name &&
+          c.name.toUpperCase().includes(keyword))
+       );
 
-      renderSymbolOptions(filtered);
+       if (filtered.length === 0) {
+         renderSymbolOptions([]);
+         return;
+       }
+
+       CURRENT_SYMBOL = filtered[0].symbol;   // 🔥 これが必要
+
+       renderSymbolOptions(filtered);
     });
-  }
+}
 
-  /* 初回ロード */
+  // 初回ロード
   loadPrediction();
 });
