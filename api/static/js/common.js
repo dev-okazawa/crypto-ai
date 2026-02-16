@@ -79,10 +79,7 @@ function formatDiff(diff, pct) {
   const diffAbs = Math.abs(diff);
   const pctAbs = Math.abs(pct);
 
-  return `
-    ${sign}${formatSmallNumber(diffAbs)}
-    (${sign}${pctAbs.toFixed(2)}%)
-  `;
+  return `${sign}$${formatSmallNumber(diffAbs)} (${sign}${pctAbs.toFixed(2)}%)`;
 }
 
 
