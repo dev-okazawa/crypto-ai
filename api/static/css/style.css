@@ -14,7 +14,7 @@ body {
 .card {
   margin-top:60px;
   background: #020617;
-  padding: 0 12px;
+  padding: 0 16px;
   /*border-radius: 12px;*/
   box-shadow: 0 10px 30px rgba(0,0,0,0.4);
 }
@@ -45,7 +45,7 @@ button {
 
 .result {
   /*margin-top: 16px;*/
-  padding: 16px;
+  padding: 16px 0;
   border-radius: 10px;
   background: #020617;
 }
