@@ -71,6 +71,26 @@ async function loadPrediction() {
     const payload = response.data;
     const m = payload.metrics;
 
+    /* ===== 🔥 Symbol Header ===== */
+    const header = document.getElementById("symbolHeader");
+    const logo = document.getElementById("symbolLogo");
+    const title = document.getElementById("symbolTitle");
+
+    const symbolInfo = ALL_SYMBOLS.find(s => s.symbol === symbol);
+
+    if (header && logo && title) {
+
+      const base = symbol.replace("USDT", "");
+      title.innerText = `${base} / USDT`;
+
+      if (symbolInfo && symbolInfo.image) {
+        logo.src = symbolInfo.image;
+        header.style.display = "flex";
+      } else {
+        header.style.display = "none";
+      }
+    }
+
     /* ===== Prices ===== */
 
     document.getElementById("curPrice").innerHTML =
