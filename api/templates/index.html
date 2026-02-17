@@ -2,13 +2,6 @@
 
 {% block page_css %}
 <link rel="stylesheet" href="/static/css/index.css">
-<style>
-  /* アイコンを強制的にグレーにする共通設定 */
-  .rank-icon, .coin-icon {
-    filter: grayscale(100%);
-    opacity: 0.8;
-  }
-</style>
 {% endblock %}
 
 {% block content %}
@@ -45,12 +38,12 @@
                 {% endif %}
               {% endfor %}
               
-              {# symbol_cleanを事前に定義 #}
-              {% set symbol_clean = item.symbol.replace('USDT', '').lower() %}
-              <img src="{{ ns.icon if ns.icon else '/static/img/' ~ symbol_clean ~ '.png' }}" 
+              {% set symbol_name = item.symbol.replace('USDT', '').lower() %}
+              {# 1.まずコイン固有のURL 2.なければBinance公式の静的URL 3.最後にローカル画像を表示 #}
+              <img src="{{ ns.icon if ns.icon else 'https://static.binance.com/static/images/home/market/icon/' ~ symbol_name ~ '.png' }}" 
                    class="rank-icon" 
                    alt="{{ item.symbol }}" 
-                   onerror="this.onerror=null; this.src='https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/black/{{ symbol_clean }}.png';">
+                   onerror="this.onerror=null; this.src='/static/img/{{ symbol_name }}.png';">
               
               <div class="symbol-text-box">
                 <strong class="rank-symbol">{{ item.symbol.replace('USDT', '') }}</strong>
@@ -68,7 +61,11 @@
     </div>
   </section>
 
-  {# ... (中略: middile-area や sort-bar はそのまま) ... #}
+  <section class="middile-area">
+    <div class="top-left">
+      <a href="/prediction" class="nav-button">🔮 Prediction</a>
+    </div>  
+  </section>
 
   <section class="market-section-header">
     <h2 class="section-title"><span>✨</span> AI Prediction</h2>
@@ -77,6 +74,8 @@
   <div class="sort-bar" id="sort-bar">
     <button data-sort="marketcap_desc" class="sort-btn active">MarketCap ↑</button>
     <button data-sort="marketcap_asc" class="sort-btn">MarketCap ↓</button>
+    <button data-sort="change_desc" class="sort-btn">Change ↑</button>
+    <button data-sort="change_asc" class="sort-btn">Change ↓</button>
   </div>
 
   <div class="coin-list" id="coin-list-container">
@@ -85,10 +84,12 @@
       <div class="coin-card">
         <div class="coin-top">
           <div class="coin-info">
-            <img src="{{ coin.image }}" 
-                 alt="{{ coin.name }}" 
+            {# 下部リストもBinanceのカラーアイコンを優先的に参照 #}
+            {% set c_symbol = coin.symbol.replace('USDT', '').lower() %}
+            <img src="{{ coin.image if coin.image else 'https://static.binance.com/static/images/home/market/icon/' ~ c_symbol ~ '.png' }}" 
+                 alt="" 
                  class="coin-icon" 
-                 onerror="this.onerror=null; this.src='https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/black/{{ coin.symbol.replace('USDT', '').lower() }}.png';">
+                 onerror="this.onerror=null; this.src='/static/img/{{ c_symbol }}.png';">
             <span class="coin-name">{{ coin.name }}/USDT</span>
           </div>
         </div>
@@ -109,9 +110,9 @@
 {% endblock %}
 
 {% block page_scripts %}
-{# VS Codeのエラー回避のため、一回変数に受けてからscriptタグに入れる #}
+{# VS Codeのエラーを回避するため、JSONデータを安全に埋め込みます #}
 <script id="coin-data" type="application/json">
-  {{ coins | tojson | safe }}
+{{ coins | tojson | safe }}
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="/static/js/index.js"></script>
