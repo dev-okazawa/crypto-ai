@@ -132,11 +132,13 @@ async function loadPrediction() {
       priceChangeEl.innerHTML = `<span class="${direction}">${formatDiff(m.diff, m.pct_change)}</span>`;
     }
 
-    // Last Updated
+    // --- 修正：ここでの updatedAt (—) への上書きを停止 ---
+    /*
     const updatedEl = document.getElementById("updatedAt");
     if (updatedEl) {
       updatedEl.innerText = m.current_price_at || "—";
     }
+    */
 
     // Confidence
     const confidence = Number(payload.confidence || 0);
@@ -166,7 +168,7 @@ async function loadPrediction() {
 }
 
 // ===============================
-// Accuracy API（確定版）
+// Accuracy API（Last Updated 対応版）
 // ===============================
 async function loadAccuracy(symbol, interval) {
   try {
@@ -180,34 +182,41 @@ async function loadAccuracy(symbol, interval) {
     const accuracyText = document.getElementById("accuracyText");
     const maeText = document.getElementById("maeText");
     const totalText = document.getElementById("totalPredictionsText");
+    
+    // --- 修正：HTML側の ID "lastUpdatedText" を取得 ---
+    const lastUpdatedText = document.getElementById("lastUpdatedText"); 
 
     if (!data || data.accuracy == null) {
       if (accuracyFill) accuracyFill.style.width = "0%";
       if (accuracyText) accuracyText.innerText = "--%";
-      if (maeText) maeText.innerText = "--%";
-      if (totalText) totalText.innerText = "—";
       return;
     }
 
-    // 1. Accuracy の反映 (小数点2桁固定)
-    if (accuracyFill) accuracyFill.style.width = data.accuracy + "%";
+    // 1. Accuracy の反映（バーの幅を更新）
+    if (accuracyFill) {
+      accuracyFill.style.width = data.accuracy + "%";
+    }
     if (accuracyText) {
       accuracyText.textContent = Number(data.accuracy).toFixed(2) + "%";
     }
 
-    // 2. Total Predictions の反映 (全件表示)
+    // 2. Total Predictions の反映
     if (totalText) {
-      totalText.textContent = (data.total !== undefined && data.total !== null) 
-        ? data.total + " Predictions" 
-        : "—";
+      totalText.textContent = data.total + " Predictions";
     }
 
-    // 3. MAE の反映 (小数点2桁固定)
+    // 3. MAE の反映
     if (maeText) {
-      // data.mae が 0 でも 0.00% と表示させる
-      const maeVal = (data.mae !== undefined && data.mae !== null) ? data.mae : 0;
+      const maeVal = data.mae || 0;
       maeText.textContent = Number(maeVal).toFixed(2) + "%";
     }
+
+    // 4. Last Updated の反映 (UTC表記を整形)
+    if (lastUpdatedText && data.generated_at) {
+      // "2026-02-18T04:20:00" -> "2026-02-18 04:20"
+      lastUpdatedText.textContent = data.generated_at.replace("T", " ").substring(0, 16);
+    }
+
   } catch (e) {
     console.log("accuracy error", e);
   }

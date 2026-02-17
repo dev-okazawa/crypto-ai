@@ -9,12 +9,12 @@
 
   <div class="index-topbar">
     <div class="top-right">
-      {% if last_updated %}
-        <span class="updated-label">Last Updated (UTC)</span>
-        <span class="updated-time">{{ last_updated[:16].replace("T", " ") }}</span>
-      {% endif %}
-    </div>
-  </div>
+     <span class="updated-label">Last Updated (UTC)</span>
+     <span id="lastUpdatedText" class="updated-time">
+      {{ last_updated[:16].replace("T", " ") if last_updated else "—" }}
+    </span>
+   </div>
+</div>
 
   <section class="accuracy-ranking-wrapper">
     <h2 class="section-title"><span>🔥</span> Top AI Accuracy</h2>

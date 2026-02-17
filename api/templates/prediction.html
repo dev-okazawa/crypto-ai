@@ -11,10 +11,8 @@
 
     <h1 class="content_name">Prediction</h1>
 
-    <!-- Market Ranking -->
     <a href="/visualize" class="nav-button">📈 Market Overview</a>
 
-    <!-- Symbol search -->
     <label for="symbolSearch">Search Symbol</label>
     <input
       type="text"
@@ -23,11 +21,9 @@
       autocomplete="off"
     />
 
-    <!-- Symbol selector -->
     <label for="symbol">Symbol</label>
     <select id="symbol"></select>
 
-    <!-- Timeframe -->
     <label for="timeframe">Prediction Timeframe</label>
     <select id="timeframe">
       <option value="1h">1 Hour (Short-term)</option>
@@ -35,10 +31,8 @@
       <option value="1w">1 Week (7 Days)</option>
     </select>
 
-    <!-- Action -->
     <button id="predictBtn">Get Prediction</button>
 
-    <!-- Prediction Result -->
     <div id="result" class="result">
 
       <div id="symbolHeader" class="symbol-header" style="display:none;">
@@ -70,12 +64,12 @@
       </div>
 
       <div class="result-row accuracy-row">
-        <span class="result-label">Model Accuracy</span>
-        <div class="accuracy-bar">
-          <div id="accuracyFill" class="accuracy-fill"></div>
-        </div>
-        <span id="accuracyText">--%</span>
-      </div>
+  <span class="result-label">Model Accuracy</span>
+  <div class="accuracy-bar">
+    <div id="accuracyFill" class="accuracy-fill"></div>
+  </div>
+  <span id="accuracyText">--%</span>
+</div>
 
       <div class="result-row">
         <span class="result-label">Total Predictions</span>
@@ -89,11 +83,12 @@
 
       <div class="result-row">
         <span class="result-label">Last Updated (UTC)</span>
-        <span id="updatedAt">—</span>
+        <span id="lastUpdatedText">
+          {{ last_updated[:16].replace("T", " ") if last_updated else "—" }}
+        </span>
       </div>
     </div>
 
-    <!-- Prediction Chart -->
     <div class="market-snapshot">
       <h2 class="snapshot-title">Prediction Chart</h2>
       <div id="snapshotContainer" class="prediction-chart mini">
