@@ -22,7 +22,8 @@ def evaluate_predictions():
     cur = conn.cursor(dictionary=True)
 
     # 1. 未評価データの実際の価格(Actual Price)を特定して埋める
-    cur.execute("SELECT * FROM predictions WHERE evaluated = FALSE")
+    # DBのカラム名 'evaluated' に合わせて修正
+    cur.execute("SELECT * FROM predictions WHERE evaluated = 0")
     rows = cur.fetchall()
     print(f"[EVALUATE] Found {len(rows)} unevaluated rows.")
 
@@ -35,6 +36,7 @@ def evaluate_predictions():
         df = load_csv(symbol, timeframe)
         if df is None: continue
 
+        # CSVの時間をミリ秒に変換してソート
         df["open_time"] = pd.to_datetime(df["open_time"], utc=True)
         df["open_time"] = df["open_time"].apply(lambda x: int(x.timestamp() * 1000))
         df = df.sort_values("open_time").reset_index(drop=True)
@@ -44,7 +46,7 @@ def evaluate_predictions():
 
         # 未来のターゲット時刻を計算
         target_time = predict_time + horizon * interval_ms
-        # 事実：完全一致しない場合に備え、ターゲット時刻以降の直近の足を取得
+        # ターゲット時刻以降の直近の足を取得
         target_row = df[df["open_time"] >= target_time].head(1)
 
         if len(target_row) == 0:
@@ -54,7 +56,7 @@ def evaluate_predictions():
 
         cur.execute("""
             UPDATE predictions
-            SET actual_price = %s, evaluated = TRUE
+            SET actual_price = %s, evaluated = 1
             WHERE id = %s
         """, (actual_price, row["id"]))
         print(f"Filled actual_price for {symbol} id={row['id']}")
@@ -63,17 +65,17 @@ def evaluate_predictions():
 
     # 2. 的中率(Accuracy)の計算とランキングテーブルの更新
     print("[EVALUATE] Calculating accuracy metrics...")
-    cur.execute("SELECT DISTINCT symbol FROM predictions WHERE evaluated = TRUE")
+    cur.execute("SELECT DISTINCT symbol FROM predictions WHERE evaluated = 1")
     active_symbols = cur.fetchall()
 
     for s in active_symbols:
         symbol = s['symbol']
         
-        # 過去直近100件の評価済みデータを取得
+        # 過去直近100件の評価済みデータを取得 (current_priceをbase_priceに修正)
         cur.execute("""
-            SELECT current_price, predicted_price, actual_price 
+            SELECT base_price, predicted_price, actual_price 
             FROM predictions 
-            WHERE symbol = %s AND evaluated = TRUE 
+            WHERE symbol = %s AND evaluated = 1 
             ORDER BY predict_time DESC LIMIT 100
         """, (symbol,))
         
@@ -84,9 +86,9 @@ def evaluate_predictions():
         total = len(history)
         
         for record in history:
-            # 予測：上がると言ったか？ / 実績：上がったか？
-            pred_up = record['predicted_price'] > record['current_price']
-            actual_up = record['actual_price'] > record['current_price']
+            # 予測時の価格(base_price)から見て上がると言ったか？ / 実績は上がったか？
+            pred_up = record['predicted_price'] > record['base_price']
+            actual_up = record['actual_price'] > record['base_price']
             
             if pred_up == actual_up:
                 hits += 1

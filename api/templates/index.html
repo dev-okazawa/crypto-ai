@@ -37,10 +37,13 @@
                   {% set ns.icon = c.image %}
                 {% endif %}
               {% endfor %}
-              <img src="{{ ns.icon if ns.icon else '/static/img/' ~ item.symbol.replace('USDT', '').lower() ~ '.png' }}" 
+              
+              {# アイコンロジック修正: ローカルになければ外部CDN(crypto-icons)を参照 #}
+              {% set symbol_clean = item.symbol.replace('USDT', '').lower() %}
+              <img src="{{ ns.icon if ns.icon else '/static/img/' ~ symbol_clean ~ '.png' }}" 
                    class="rank-icon" 
-                   alt="" 
-                   onerror="this.onerror=null; this.style.display='none';">
+                   alt="{{ item.symbol }}" 
+                   onerror="this.onerror=null; this.src='https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/{{ symbol_clean }}.png';">
               
               <div class="symbol-text-box">
                 <strong class="rank-symbol">{{ item.symbol.replace('USDT', '') }}</strong>
@@ -81,10 +84,11 @@
       <div class="coin-card">
         <div class="coin-top">
           <div class="coin-info">
+            {# 下部リストのアイコンも同様にエラーハンドリング追加 #}
             <img src="{{ coin.image }}" 
-                 alt="" 
+                 alt="{{ coin.name }}" 
                  class="coin-icon" 
-                 onerror="this.onerror=null; this.style.display='none';">
+                 onerror="this.onerror=null; this.src='https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/{{ coin.symbol.replace('USDT', '').lower() }}.png';">
             <span class="coin-name">{{ coin.name }}/USDT</span>
           </div>
         </div>
