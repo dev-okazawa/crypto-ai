@@ -38,12 +38,12 @@
                 {% endif %}
               {% endfor %}
               
-              {% set symbol_name = item.symbol.replace('USDT', '').lower() %}
-              {# 1.まずコイン固有のURL 2.なければBinance公式の静的URL 3.最後にローカル画像を表示 #}
+              {% set symbol_name = item.symbol.replace('USDT', '').strip().lower() %}
+              {# 修正：1.API取得URL 2.Binance公式静的URL 3.外部カラーアイコンセット #}
               <img src="{{ ns.icon if ns.icon else 'https://static.binance.com/static/images/home/market/icon/' ~ symbol_name ~ '.png' }}" 
                    class="rank-icon" 
                    alt="{{ item.symbol }}" 
-                   onerror="this.onerror=null; this.src='/static/img/{{ symbol_name }}.png';">
+                   onerror="this.onerror=null; this.src='https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/{{ symbol_name }}.png';">
               
               <div class="symbol-text-box">
                 <strong class="rank-symbol">{{ item.symbol.replace('USDT', '') }}</strong>
@@ -84,12 +84,12 @@
       <div class="coin-card">
         <div class="coin-top">
           <div class="coin-info">
-            {# 下部リストもBinanceのカラーアイコンを優先的に参照 #}
-            {% set c_symbol = coin.symbol.replace('USDT', '').lower() %}
+            {% set c_symbol = coin.symbol.replace('USDT', '').strip().lower() %}
+            {# 修正：下部リストも同様にローカルファイルを参照せず外部URLで完結させる #}
             <img src="{{ coin.image if coin.image else 'https://static.binance.com/static/images/home/market/icon/' ~ c_symbol ~ '.png' }}" 
                  alt="" 
                  class="coin-icon" 
-                 onerror="this.onerror=null; this.src='/static/img/{{ c_symbol }}.png';">
+                 onerror="this.onerror=null; this.src='https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/{{ c_symbol }}.png';">
             <span class="coin-name">{{ coin.name }}/USDT</span>
           </div>
         </div>
@@ -110,7 +110,6 @@
 {% endblock %}
 
 {% block page_scripts %}
-{# VS Codeのエラーを回避するため、JSONデータを安全に埋め込みます #}
 <script id="coin-data" type="application/json">
 {{ coins | tojson | safe }}
 </script>
