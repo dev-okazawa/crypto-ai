@@ -39,7 +39,7 @@
               {% endfor %}
               
               {% set symbol_name = item.symbol.replace('USDT', '').strip().lower() %}
-              {# 修正：1.API取得URL 2.Binance公式静的URL 3.外部カラーアイコンセット #}
+              {# 例外なし：1.API取得URL 2.Binance公式静的URL 3.外部カラーアイコン補完 #}
               <img src="{{ ns.icon if ns.icon else 'https://static.binance.com/static/images/home/market/icon/' ~ symbol_name ~ '.png' }}" 
                    class="rank-icon" 
                    alt="{{ item.symbol }}" 
@@ -85,7 +85,6 @@
         <div class="coin-top">
           <div class="coin-info">
             {% set c_symbol = coin.symbol.replace('USDT', '').strip().lower() %}
-            {# 修正：下部リストも同様にローカルファイルを参照せず外部URLで完結させる #}
             <img src="{{ coin.image if coin.image else 'https://static.binance.com/static/images/home/market/icon/' ~ c_symbol ~ '.png' }}" 
                  alt="" 
                  class="coin-icon" 
