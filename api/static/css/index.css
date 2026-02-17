@@ -130,6 +130,8 @@
 .mini-chart canvas {
   width: 100% !important;
   height: 60px !important;
+  position: absolute;
+  bottom: 3px;
 }
 
 /* 横レイアウト */
