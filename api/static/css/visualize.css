@@ -229,6 +229,7 @@
   outline: none;
   transition: border 0.2s ease;
   width: 100%;
+  font-size:16px;
 }
 
 #moSearch:focus {
@@ -241,8 +242,8 @@
 
 
 .coin-logo {
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   object-fit: cover;
   vertical-align: middle;
@@ -267,4 +268,8 @@
 
 .market-link:hover {
   color: inherit;
+}
+
+.pair {
+    font-size: 16px;
 }

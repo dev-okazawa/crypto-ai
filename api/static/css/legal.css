@@ -50,16 +50,22 @@ h1.content_legal {
 .contact-form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  /*gap: 12px;*/
   margin-top: 20px;
 }
 
 .contact-form input,
 .contact-form textarea {
+  background: #111827;
+  border: 1px solid #374151;
+  color: #fff;
   padding: 10px;
   border-radius: 6px;
-  border: none;
-  font-size: 14px;
+  outline: none;
+  transition: border 0.2s ease;
+  width: 100%;
+  margin:10px 0 12px;
+  font-size:16px;
 }
 
 .contact-form button {

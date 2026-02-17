@@ -74,7 +74,7 @@ body {
 
 /* ===== Logo ===== */
 .logo {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 600;
   text-decoration: none;
   color: #fff;
@@ -172,14 +172,14 @@ body {
 .logo {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 16px;
   text-decoration: none;
   color: #fff;
 }
 
 .logo-icon {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   object-fit: contain;
 }
 
