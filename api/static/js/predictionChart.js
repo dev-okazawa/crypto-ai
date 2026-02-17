@@ -69,11 +69,8 @@ function renderPredictionChart({ chart, diff, interval = "1h", mode = "full" }) 
 
   const isMini = mode === "mini";
   const width = isMini ? 400 : 800;
-  
-  // モードに応じて高さを最適化（スカスカ感を防ぐため）
   const height = isMini ? 140 : 300; 
 
-  // マージンの最適化
   const margin = isMini
     ? { top: 5, right: 25, bottom: 25, left: 95 }
     : { top: 8, right: 35, bottom: 28, left: 125 };
@@ -95,12 +92,20 @@ function renderPredictionChart({ chart, diff, interval = "1h", mode = "full" }) 
     futureData.push({ time: firstFuture.time + intervalMs, price: firstFuture.value + slope });
   }
 
+  // --- 修正箇所：allDataを定義し、padding計算を行う ---
   const allData = pastData.concat(futureData);
-  const min = Math.min(...allData.map(d => d.price));
-  const max = Math.max(...allData.map(d => d.price));
+  const rawMin = Math.min(...allData.map(d => d.price));
+  const rawMax = Math.max(...allData.map(d => d.price));
+  const range = rawMax - rawMin || 1;
+  const padding = range * 0.15; // 上下に15%ずつの余白
+
+  const min = rawMin - padding;
+  const max = rawMax + padding;
   const mid = (min + max) / 2;
+  
   const minTime = Math.min(...allData.map(d => d.time));
   const maxTime = Math.max(...allData.map(d => d.time));
+  // --------------------------------------------------
 
   const normalized = normalizePrices(allData, chartWidth, chartHeight, min, max, minTime, maxTime);
   const points = normalized.map(p => `${p.x + margin.left},${p.y + margin.top}`);
@@ -116,7 +121,6 @@ function renderPredictionChart({ chart, diff, interval = "1h", mode = "full" }) 
   const lastY = lastPoint.y + margin.top;
   const color = diff > 0 ? "#22c55e" : diff < 0 ? "#ef4444" : "#94a3b8";
 
-  // --- X軸生成 ---
   const candleTimes = pastData.map(d => d.time);
   const labelFontSize = isMini ? 14 : 18;
   const stepIndex = Math.max(1, Math.floor(candleTimes.length / (isMini ? 3 : 5)));
@@ -133,7 +137,6 @@ function renderPredictionChart({ chart, diff, interval = "1h", mode = "full" }) 
     `;
   }
 
-  // Now ラベル
   const lastUpdateTimeStr = formatTime(candleTimes[split], interval);
   gridElements += `
     <text x="${lastX}" y="${margin.top + chartHeight + 35}" text-anchor="middle" font-size="${labelFontSize}" fill="#cbd5e1" font-weight="bold">
@@ -179,5 +182,4 @@ function renderPredictionChart({ chart, diff, interval = "1h", mode = "full" }) 
   `;
 }
 
-// グローバルスコープへ公開（visualize.jsからも呼べるように）
 window.renderPredictionChart = renderPredictionChart;

@@ -68,7 +68,7 @@ def health():
     }
 
 # =====================
-# INDEX (的中率ランキング + 市場データ統合)
+# INDEX (修正版：最新キャッシュから的中率を抽出)
 # =====================
 
 @app.get("/", response_class=HTMLResponse)
@@ -79,54 +79,8 @@ def index(request: Request):
 
     path = CACHE_DIR / f"market_overview_{interval}.json"
     coins = []
-    generated_at = None 
-
-    # --- 🔥 的中率ランキングを取得するロジック (Prediction仕様に修正) ---
     accuracy_ranking = []
-    
-    # 1. 基準となる「サポート銘柄リスト」を先に取得
-    supported = get_supported(interval)
-    # 検索を高速化するためにシンボルをキーにした辞書を作成
-    supported_map = {c["symbol"]: c for c in supported}
-
-    try:
-        conn = get_connection()
-        with conn.cursor(dictionary=True) as cur:
-            # フィルタリングに備え、LIMITを少し多めに設定して取得
-            cur.execute("""
-                SELECT 
-                    symbol, 
-                    accuracy, 
-                    count
-                FROM accuracy_ranking
-                WHERE count >= 5
-                ORDER BY accuracy DESC, count DESC
-                LIMIT 50
-            """)
-            rows = cur.fetchall()
-            
-            for r in rows:
-                full_symbol = r['symbol']
-                # 2. Predictionページでサポートされている（Binance上場+Top200）銘柄のみ採用
-                if full_symbol in supported_map:
-                    coin_info = supported_map[full_symbol]
-                    accuracy_ranking.append({
-                        "symbol": full_symbol.replace("USDT", ""), # 表示用 (例: BTC)
-                        "full_symbol": full_symbol,                 # 内部用
-                        "accuracy": r['accuracy'],
-                        "count": r['count'],
-                        "image": coin_info.get("image") or ""      # 正しい画像URLをセット
-                    })
-                
-                # 上位10件に達したら終了
-                if len(accuracy_ranking) >= 10:
-                    break
-        conn.close()
-    except Exception as e:
-        print("ACCURACY RANKING LOAD ERROR:", e)
-
-    # symbol_order の作成 (既存ロジック継続)
-    symbol_order = {c["symbol"]: i for i, c in enumerate(supported)}
+    generated_at = None 
 
     if path.exists():
         try:
@@ -151,6 +105,7 @@ def index(request: Request):
                 diff = float(metrics.get("diff", 0))
                 pct_change = float(metrics.get("pct_change", 0))
 
+                # --- 1. 市場データ用のリスト構築 ---
                 coins.append({
                     "name": base_symbol,
                     "symbol": symbol_full,
@@ -161,8 +116,26 @@ def index(request: Request):
                     "change_percent": pct_change,
                     "trend": [float(x) for x in past[-30:]]
                 })
+
+                # --- 2. 的中率ランキング用のデータを抽出 (DBではなくJSONから) ---
+                accuracy_ranking.append({
+                    "symbol": base_symbol,
+                    "full_symbol": symbol_full,
+                    "accuracy": metrics.get("accuracy", 0.0), # dto.pyで追加した本物の精度
+                    "count": metrics.get("count", 0),
+                    "image": item.get("image") or ""
+                })
+
         except Exception as e:
             print("INDEX LOAD ERROR:", e)
+
+    # 精度が高い順にソートして上位10件を抽出
+    accuracy_ranking.sort(key=lambda x: x["accuracy"], reverse=True)
+    accuracy_ranking = accuracy_ranking[:10]
+
+    # --- ソート処理 (既存のまま) ---
+    supported = get_supported(interval)
+    symbol_order = {c["symbol"]: i for i, c in enumerate(supported)}
 
     if sort == "change_desc":
         coins.sort(key=lambda x: x["change_percent"], reverse=True)
