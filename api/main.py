@@ -121,7 +121,7 @@ def index(request: Request):
                 accuracy_ranking.append({
                     "symbol": base_symbol,
                     "full_symbol": symbol_full,
-                    "accuracy": metrics.get("accuracy", 0.0), # dto.pyで追加した本物の精度
+                    "accuracy": metrics.get("accuracy", 0.0), 
                     "count": metrics.get("count", 0),
                     "image": item.get("image") or ""
                 })
@@ -133,7 +133,7 @@ def index(request: Request):
     accuracy_ranking.sort(key=lambda x: x["accuracy"], reverse=True)
     accuracy_ranking = accuracy_ranking[:10]
 
-    # --- ソート処理 (既存のまま) ---
+    # --- ソート処理 ---
     supported = get_supported(interval)
     symbol_order = {c["symbol"]: i for i, c in enumerate(supported)}
 
@@ -165,7 +165,7 @@ def index(request: Request):
     )
 
 # =====================
-# Other Pages (変更なし)
+# Other Pages
 # =====================
 
 @app.get("/prediction", response_class=HTMLResponse)
@@ -206,7 +206,7 @@ def contact(request: Request):
     return templates.TemplateResponse("contact.html", {"request": request, **seo_context(title="Contact", description="Contact", keywords="contact", canonical="https://cryptoaipredict.com/contact")})
 
 # =====================
-# API Endpoints (変更なし)
+# API Endpoints
 # =====================
 
 @app.get("/predict")
@@ -235,26 +235,43 @@ def api_market_overview(interval: str = Query("1h"), limit: int = Query(20, ge=1
 
 @app.get("/accuracy")
 def get_accuracy(symbol: str = Query(...), interval: str = Query("1h")):
-    conn = get_connection()
-    cur = conn.cursor(dictionary=True)
+    """
+    詳細画面用の精度取得API。
+    """
+    path = CACHE_DIR / f"market_overview_{interval}.json"
     full_symbol = symbol if "USDT" in symbol else symbol + "USDT"
+    
     try:
-        cur.execute("""
-            SELECT AVG(ABS(predicted_price - actual_price) / base_price) * 100 AS mae_val
-            FROM predictions WHERE symbol = %s AND evaluated = 1
-        """, (full_symbol,))
-        mae_row = cur.fetchone()
-        mae = round(mae_row['mae_val'], 2) if mae_row and mae_row['mae_val'] is not None else 0.00
-        cur.execute("SELECT accuracy, count FROM accuracy_ranking WHERE symbol = %s OR symbol = %s LIMIT 1", (symbol, full_symbol))
-        row = cur.fetchone()
-        if not row: return {"status": "ok", "accuracy": 0, "mae": mae, "total": 0}
-        return {"status": "ok", "accuracy": row['accuracy'], "mae": mae, "total": row['count']}
+        # 1. キャッシュJSONから検索
+        if path.exists():
+            data = json.loads(path.read_text())
+            items = data.get("items", [])
+            for item in items:
+                item_symbol = item.get("meta", {}).get("symbol", "")
+                if item_symbol == full_symbol:
+                    metrics = item.get("data", {}).get("metrics", {})
+                    return {
+                        "status": "ok",
+                        "accuracy": metrics.get("accuracy", 0.0),
+                        "total": metrics.get("count", 0),
+                        "mae": metrics.get("mae", 0.0)
+                    }
+        
+        # 2. キャッシュにない場合はDBから計算 (dto側の修正に合わせて3つの変数で受け取る)
+        from ai.src.dto import get_actual_performance
+        accuracy, count, mae = get_actual_performance(full_symbol, interval)
+        
+        return {
+            "status": "ok",
+            "accuracy": accuracy,
+            "total": count,
+            "mae": mae
+        }
+
     except Exception as e:
         print(f"Accuracy API Error: {e}")
+        traceback.print_exc()
         return {"status": "error", "message": str(e)}
-    finally:
-        cur.close()
-        conn.close()
 
 @app.get("/sitemap.xml", include_in_schema=False)
 def dynamic_sitemap():

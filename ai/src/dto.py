@@ -7,45 +7,53 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = BASE_DIR / "ai" / "data" / "raw"
 
 def get_actual_performance(symbol: str, interval: str):
-    """
-    DBの予測データと実績価格を照合して的中率を算出。
-    """
     conn = get_connection()
     cur = conn.cursor(dictionary=True)
     
     try:
+        # カラム指定をせず * で取得し、コード側で安全に処理する
         cur.execute("""
-            SELECT predicted_price, actual_price
+            SELECT *
             FROM predictions
             WHERE symbol = %s AND timeframe = %s AND evaluated = TRUE 
-            ORDER BY id DESC LIMIT 100
+            ORDER BY id DESC
         """, (symbol, interval))
         
         rows = cur.fetchall()
         if not rows:
-            return 0.0, 0
+            return 0.0, 0, 0.0
 
         hits = 0
-        total = len(rows)
+        total_mae_pct = 0.0
+        count = len(rows)
 
         for row in rows:
-            pred = float(row['predicted_price'])
-            actual = float(row['actual_price'])
+            pred = float(row.get('predicted_price') or 0)
+            actual = float(row.get('actual_price') or 0)
             
-            # 100%を避けるため、誤差判定を非常に厳しく(0.1%)設定
-            error_rate = abs(pred - actual) / actual
-            if error_rate <= 0.001: 
+            # 優先順位をつけて基準価格を取得 (current_priceがない対策)
+            base = float(row.get('current_price') or row.get('initial_price') or actual)
+
+            # 方向判定
+            if (pred - base) * (actual - base) >= 0:
                 hits += 1
+            
+            # MAE算出
+            if actual > 0:
+                total_mae_pct += (abs(pred - actual) / actual) * 100
         
-        accuracy = round((hits / total) * 100, 1)
-        return accuracy, total
+        accuracy = round((hits / count) * 100, 2)
+        avg_mae = round(total_mae_pct / count, 2)
+
+        return accuracy, count, avg_mae
     except Exception as e:
-        print(f"Error: {e}")
-        return 0.0, 0
+        print(f"DTO Logic Error for {symbol}: {e}")
+        return 0.0, 0, 0.0
     finally:
         cur.close()
         conn.close()
 
+# --- 以下の関数は変更なし ---
 def load_price_history(symbol: str, interval: str, points: int = 30):
     path = DATA_DIR / f"{symbol}_{interval}.csv"
     if not path.exists():
@@ -104,7 +112,7 @@ def build_prediction_dto(result: dict):
         }
     }
 
-    accuracy, count = get_actual_performance(result["symbol"], result["interval"])
+    accuracy, count, mae = get_actual_performance(result["symbol"], result["interval"])
 
     return {
         "symbol": result["symbol"],
@@ -120,6 +128,7 @@ def build_prediction_dto(result: dict):
             "current_price_at": current_price_at,
             "accuracy": accuracy,
             "count": count,
+            "mae": mae,
         },
         "direction_internal": result.get("direction_internal"),
         "meta": {

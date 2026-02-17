@@ -51,7 +51,7 @@
             </div>
 
             <div class="rank-value-group">
-              <span class="rank-accuracy">{{ item.accuracy }}</span><span class="rank-label">%</span>
+              <span class="rank-accuracy">{{ "%.2f"|format(item.accuracy) }}</span><span class="rank-label">%</span>
             </div>
           </div>
           <div class="rank-stats-mini">{{ item.count }} Predictions</div>

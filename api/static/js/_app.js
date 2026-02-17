@@ -207,51 +207,46 @@ async function loadPrediction({ silent = false } = {}) {
   }
 }
 
-
 // =========================
-// Accuracy + MAE
+// Accuracy + MAE (整理版)
 // =========================
-
 async function loadAccuracy(symbol, interval) {
-
   try {
-
-    const res = await fetch(
-      `/accuracy?interval=${interval}&symbol=${symbol}`
-    );
-
+    const res = await fetch(`/accuracy?interval=${interval}&symbol=${symbol}`);
     if (!res.ok) return;
 
     const data = await res.json();
+    console.log("Accuracy Data Received:", data); // これがブラウザのコンソールに出るか確認
 
     const fill = document.getElementById("accuracyFill");
     const text = document.getElementById("accuracyText");
     const maeText = document.getElementById("maeText");
+    const totalText = document.getElementById("totalPredictionsText");
 
-    if (!data || data.accuracy === null) {
+    // 1. Accuracy の反映
+    if (fill) fill.style.width = `${data.accuracy || 0}%`;
+    if (text) text.textContent = `${data.accuracy || 0}%`;
 
-      if (fill) fill.style.width = "0%";
-      if (text) text.textContent = "Evaluating...";
-      if (maeText) maeText.textContent = "--%";
-
-      return;
+    // 2. Total Predictions の反映
+    if (totalText) {
+      // 0 または値がある場合は表示、それ以外は —
+      totalText.textContent = (data.total !== undefined && data.total !== null) 
+        ? `${data.total} Predictions` 
+        : "—";
     }
 
-    if (fill) fill.style.width = `${data.accuracy}%`;
-    if (text) text.textContent = `${data.accuracy}%`;
-
-    if (maeText && data.mae !== null) {
-      maeText.textContent =
-        `${Number(data.mae).toFixed(2)}%`;
-    } else if (maeText) {
-      maeText.textContent = "--%";
+    // 3. MAE の反映
+    if (maeText) {
+      // APIの mae が 0.0 であってもそのまま表示（APIが0を返しているなら0になる）
+      maeText.textContent = (data.mae !== undefined && data.mae !== null)
+        ? `${Number(data.mae).toFixed(2)}%`
+        : "--%";
     }
 
   } catch (e) {
-    console.error("Accuracy error:", e);
+    console.error("Accuracy fetch error:", e);
   }
 }
-
 
 // =========================
 // Init
