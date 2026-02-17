@@ -5,180 +5,106 @@
 {% endblock %}
 
 {% block content %}
-
 <div class="container index-wrapper">
 
-  <!-- ===================== -->
-  <!-- 🔥 Top Bar -->
-  <!-- ===================== -->
-
   <div class="index-topbar">
-
     <div class="top-left">
-      <a href="/prediction" class="nav-button">
-        🔮 Prediction
-      </a>
+      <a href="/prediction" class="nav-button">🔮 Prediction</a>
     </div>
-
     <div class="top-right">
       {% if last_updated %}
-        <span class="updated-label">
-          Last Updated (UTC)
-        </span>
-        <span class="updated-time">
-          {{ last_updated[:16].replace("T", " ") }}
-        </span>
+        <span class="updated-label">Last Updated (UTC)</span>
+        <span class="updated-time">{{ last_updated[:16].replace("T", " ") }}</span>
       {% endif %}
     </div>
-
   </div>
 
+  <section class="accuracy-ranking-wrapper">
+    <h2 class="section-title"><span>🔥</span> Top AI Accuracy</h2>
+    <div class="ranking-grid-container">
+      {% if accuracy_ranking %}
+        {% for item in accuracy_ranking %}
+        <a href="/prediction?symbol={{ item.symbol }}{% if 'USDT' not in item.symbol %}USDT{% endif %}" class="accuracy-card-mini">
+          <div class="card-header-row">
+            <div class="rank-badge-mini">RANK {{ loop.index }}</div>
+            {% if loop.index <= 3 %}
+              <div class="ai-pick-badge-visualize">🔥 AI PICK</div>
+            {% endif %}
+          </div>
+          
+          <div class="rank-info-mini">
+            <div class="symbol-container">
+              {% set ns = namespace(icon="") %}
+              {% for c in coins %}
+                {% if c.symbol == item.symbol or c.symbol == item.symbol ~ 'USDT' %}
+                  {% set ns.icon = c.image %}
+                {% endif %}
+              {% endfor %}
+              <img src="{{ ns.icon if ns.icon else '/static/img/' ~ item.symbol.replace('USDT', '').lower() ~ '.png' }}" 
+                   class="rank-icon" 
+                   alt="" 
+                   onerror="this.onerror=null; this.style.display='none';">
+              
+              <div class="symbol-text-box">
+                <strong class="rank-symbol">{{ item.symbol.replace('USDT', '') }}</strong>
+              </div>
+            </div>
 
-  <!-- ===================== -->
-  <!-- 🔥 Sort Buttons -->
-  <!-- ===================== -->
+            <div class="rank-value-group">
+              <span class="rank-accuracy">{{ item.accuracy }}</span><span class="rank-label">%</span>
+            </div>
+          </div>
+          <div class="rank-stats-mini">{{ item.count }} Predictions</div>
+        </a>
+        {% endfor %}
+      {% endif %}
+    </div>
+  </section>
 
-  <div class="sort-bar">
+  <section class="market-section-header">
+    <h2 class="section-title"><span>✨</span> AI Prediction</h2>
+  </section>
 
-    <!-- 大きい順 -->
-    <a href="/?sort=marketcap_desc"
-       class="sort-btn {% if current_sort == 'marketcap_desc' %}active{% endif %}">
-       MarketCap ↑
-    </a>
-
-    <!-- 小さい順 -->
-    <a href="/?sort=marketcap_asc"
-       class="sort-btn {% if current_sort == 'marketcap_asc' %}active{% endif %}">
-       MarketCap ↓
-    </a>
-
-    <!-- 上昇順 -->
-    <a href="/?sort=change_desc"
-       class="sort-btn {% if current_sort == 'change_desc' %}active{% endif %}">
-       Change ↑
-    </a>
-
-    <!-- 下降順 -->
-    <a href="/?sort=change_asc"
-       class="sort-btn {% if current_sort == 'change_asc' %}active{% endif %}">
-       Change ↓
-    </a>
-
+  <div class="sort-bar" id="sort-bar">
+    <button data-sort="marketcap_desc" class="sort-btn active">MarketCap ↑</button>
+    <button data-sort="marketcap_asc" class="sort-btn">MarketCap ↓</button>
+    <button data-sort="change_desc" class="sort-btn">Change ↑</button>
+    <button data-sort="change_asc" class="sort-btn">Change ↓</button>
   </div>
 
-
-  <!-- ===================== -->
-  <!-- 🔥 Coin List -->
-  <!-- ===================== -->
-
-  <div class="coin-list">
-
+  <div class="coin-list" id="coin-list-container">
     {% for coin in coins %}
-    <a href="/prediction?symbol={{ coin.symbol }}" class="coin-link">
-
+    <a href="/prediction?symbol={{ coin.symbol }}" class="coin-link" data-symbol="{{ coin.symbol }}">
       <div class="coin-card">
-
-        <!-- Header -->
         <div class="coin-top">
           <div class="coin-info">
-            <img src="{{ coin.image or '/static/img/default.png' }}"
-                 alt="{{ coin.symbol }}"
-                 class="coin-icon">
-
-            <div class="coin-name">
-             {{ coin.name }}/USDT
-           </div>
+            <img src="{{ coin.image }}" 
+                 alt="" 
+                 class="coin-icon" 
+                 onerror="this.onerror=null; this.style.display='none';">
+            <span class="coin-name">{{ coin.name }}/USDT</span>
           </div>
         </div>
-
-        <!-- Body -->
         <div class="coin-body">
-
           <div class="coin-prices">
-
-            <!-- Current -->
-            <div class="price-row">
-              <span class="label">Current</span>
-              <span class="price"
-                    data-price="{{ coin.current_price }}"></span>
-            </div>
-
-            <!-- Predicted -->
-            <div class="price-row">
-              <span class="label">Predicted</span>
-              <span class="price"
-                    data-price="{{ coin.predicted_price }}"></span>
-            </div>
-
-            <!-- Change -->
-            <div class="price-row">
-              <span class="label">Change</span>
-              <span class="change"
-                    data-diff="{{ coin.change }}"
-                    data-pct="{{ coin.change_percent }}">
-              </span>
-            </div>
-
+            <div class="price-row"><span class="label">Current</span><span class="price" data-price="{{ coin.current_price }}"></span></div>
+            <div class="price-row"><span class="label">Predicted</span><span class="price" data-price="{{ coin.predicted_price }}"></span></div>
+            <div class="price-row"><span class="label">Change</span><span class="change" data-diff="{{ coin.change }}" data-pct="{{ coin.change_percent }}"></span></div>
           </div>
-
-          <!-- Mini Chart -->
-          <div class="mini-chart">
-            <canvas id="chart-{{ coin.symbol }}"></canvas>
-          </div>
-
+          <div class="mini-chart"><canvas id="chart-{{ coin.symbol }}"></canvas></div>
         </div>
-
       </div>
-
     </a>
     {% endfor %}
-
   </div>
 
 </div>
-
 {% endblock %}
 
-
 {% block page_scripts %}
-
 <script id="coin-data" type="application/json">
 {{ coins | tojson | safe }}
 </script>
-
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-
-  if (typeof formatUSD !== "function" ||
-      typeof formatDiff !== "function") return;
-
-  /* ===== Price ===== */
-  document.querySelectorAll(".price").forEach(el => {
-    const value = el.dataset.price;
-    if (!value) return;
-    el.innerHTML = formatUSD(value);
-  });
-
-  /* ===== Change ===== */
-  document.querySelectorAll(".change").forEach(el => {
-
-    const diff = Number(el.dataset.diff);
-    const pct  = Number(el.dataset.pct);
-
-    const direction =
-      diff > 0 ? "up" :
-      diff < 0 ? "down" :
-      "flat";
-
-    el.innerHTML =
-      `<span class="${direction}">${formatDiff(diff, pct)}
-      </span>`;
-  });
-
-});
-</script>
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="/static/js/indexChart.js"></script>
-
+<script src="/static/js/index.js"></script>
 {% endblock %}

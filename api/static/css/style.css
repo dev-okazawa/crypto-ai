@@ -89,21 +89,6 @@ button {
   gap: 8px;
 }
 
-.confidence-bar {
-  flex: 1;
-  height: 8px;
-  background: #1e293b;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.confidence-fill {
-  height: 100%;
-  width: 0%;
-  background: #38bdf8;
-  transition: width 0.4s ease;
-}
-
 .footer {
   text-align: center;
   font-size: 11px;
@@ -292,13 +277,40 @@ button {
   white-space: nowrap;
 }
 
-.accuracy-bar {
-  width: 120px;
-  height: 8px;
-  background: #222;
-  border-radius: 4px;
+/* 自信度(Confidence)と的中率(Accuracy)の行を同じルールで整列 */
+.confidence-row, .accuracy-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%; /* 横幅いっぱいに広げる */
+}
+
+/* バーの土台（溝の部分）を共通化 */
+.confidence-bar, .accuracy-bar {
+  flex: 1;            /* 余白をすべて埋める */
+  height: 10px;       /* 少し太くして見やすくします */
+  background: #1e293b; /* 溝の色 */
+  border-radius: 5px;
   overflow: hidden;
-  margin: 0 8px;
+  position: relative; /* 子要素の基準点 */
+}
+
+/* Confidence の中身（水色） */
+.confidence-fill {
+  height: 100%;
+  width: 0%; /* JSで上書き */
+  background: #38bdf8;
+  border-radius: 5px;
+  transition: width 0.4s ease;
+}
+
+/* Accuracy の中身（グラデーション） */
+.accuracy-fill {
+  height: 100%;
+  width: 0%; /* JSで上書き */
+  background: linear-gradient(90deg, #ff4d4f, #faad14, #52c41a);
+  border-radius: 5px;
+  transition: width 0.4s ease;
 }
 
 .accuracy-fill {
@@ -307,7 +319,6 @@ button {
   width: 0%;
   transition: width 0.4s ease;
 }
-
 
 .symbol-header {
   display: flex;

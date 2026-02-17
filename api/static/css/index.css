@@ -203,6 +203,7 @@
   text-decoration: none;
   color: #cbd5e1;
   transition: all 0.2s ease;
+  margin:0;
 }
 
 .index-topbar {
@@ -234,3 +235,110 @@
     text-align:right;
 }
 
+
+/* =====================
+   Accuracy Ranking (コンパクト版 + AI PICK強調)
+===================== */
+.accuracy-ranking-wrapper {
+  margin-bottom: 24px;
+}
+
+.ranking-grid-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.accuracy-card-mini {
+  background: #0b1220;
+  border-radius: 12px;
+  padding: 6px 8px; /* 上下4pxだとバッジが窮屈だったので6pxに微調整 */
+  text-decoration: none;
+  color: #ffffff !important;
+  /*border: 1px solid #2d334a;*/
+  display: grid;
+  grid-template-areas: 
+    "header header"
+    "symbol accuracy"
+    "stats stats";
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0;
+  min-height: auto;
+}
+
+.card-header-row {
+  grid-area: header;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px; /* バッジが目立つよう少しだけ隙間を確保 */
+}
+
+/* ★ 目立つAI PICKバッジのデザイン復元 */
+.ai-pick-badge-visualize {
+  background: linear-gradient(90deg, #ff8a00, #ff4d00);
+  color: white;
+  font-size: 9px;
+  font-weight: bold;
+  padding: 2px 8px; /* パディングを戻して存在感を出す */
+  border-radius: 8px; /* 角丸を強調 */
+  box-shadow: 0 2px 6px rgba(255, 77, 0, 0.4);
+  white-space: nowrap;
+}
+
+.rank-badge-mini {
+  grid-area: header;
+  font-size: 10px;
+  color: #94a3b8;
+  font-weight: bold;
+}
+
+.symbol-container {
+  grid-area: symbol;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rank-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: contain;
+}
+
+.rank-symbol {
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.rank-value-group {
+  grid-area: accuracy;
+  text-align: right;
+  line-height: 1;
+}
+
+.rank-accuracy {
+  font-size: 21px; /* 高さを詰めつつ迫力を出すために21pxに調整 */
+  font-weight: 800;
+  color: #0ecb81;
+}
+
+.rank-label {
+  font-size: 11px;
+  color: #0ecb81;
+}
+
+.rank-stats-mini {
+  grid-area: stats;
+  font-size: 9px;
+  color: #94a3b8;
+  margin-top: 2px;
+  text-align: right;
+}
+
+.section-title {
+    font-size: 20px;
+    text-align: center;
+}

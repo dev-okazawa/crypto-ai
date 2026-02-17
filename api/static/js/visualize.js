@@ -94,6 +94,7 @@ function renderCard(item, index) {
   card.href = `/prediction?symbol=${payload.symbol}`;
   card.className = "market-card market-link";
 
+  // ★ 変更点: renderPredictionChart ではなく renderMiniChart を呼び出す
   card.innerHTML = `
     <div class="card-header">
       <div class="left" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
@@ -136,11 +137,10 @@ function renderCard(item, index) {
     <div class="mini-chart">
       ${
         payload.chart
-          ? renderPredictionChart({
+          ? renderMiniChart({
               chart: payload.chart,
               diff,
-              interval: payload.meta?.interval || CURRENT_INTERVAL,
-              mode: "mini"
+              interval: payload.meta?.interval || CURRENT_INTERVAL
             })
           : ""
       }

@@ -68,7 +68,7 @@ def health():
     }
 
 # =====================
-# INDEX (SORT対応 + LastUpdated)
+# INDEX (的中率ランキング + 市場データ統合)
 # =====================
 
 @app.get("/", response_class=HTMLResponse)
@@ -79,38 +79,75 @@ def index(request: Request):
 
     path = CACHE_DIR / f"market_overview_{interval}.json"
     coins = []
-    generated_at = None  # 🔥 追加
+    generated_at = None 
 
-    # 🔥 predictionと同じ並び取得
+    # --- 🔥 的中率ランキングを取得するロジック (Prediction仕様に修正) ---
+    accuracy_ranking = []
+    
+    # 1. 基準となる「サポート銘柄リスト」を先に取得
     supported = get_supported(interval)
+    # 検索を高速化するためにシンボルをキーにした辞書を作成
+    supported_map = {c["symbol"]: c for c in supported}
+
+    try:
+        conn = get_connection()
+        with conn.cursor(dictionary=True) as cur:
+            # フィルタリングに備え、LIMITを少し多めに設定して取得
+            cur.execute("""
+                SELECT 
+                    symbol, 
+                    accuracy, 
+                    count
+                FROM accuracy_ranking
+                WHERE count >= 5
+                ORDER BY accuracy DESC, count DESC
+                LIMIT 50
+            """)
+            rows = cur.fetchall()
+            
+            for r in rows:
+                full_symbol = r['symbol']
+                # 2. Predictionページでサポートされている（Binance上場+Top200）銘柄のみ採用
+                if full_symbol in supported_map:
+                    coin_info = supported_map[full_symbol]
+                    accuracy_ranking.append({
+                        "symbol": full_symbol.replace("USDT", ""), # 表示用 (例: BTC)
+                        "full_symbol": full_symbol,                 # 内部用
+                        "accuracy": r['accuracy'],
+                        "count": r['count'],
+                        "image": coin_info.get("image") or ""      # 正しい画像URLをセット
+                    })
+                
+                # 上位10件に達したら終了
+                if len(accuracy_ranking) >= 10:
+                    break
+        conn.close()
+    except Exception as e:
+        print("ACCURACY RANKING LOAD ERROR:", e)
+
+    # symbol_order の作成 (既存ロジック継続)
     symbol_order = {c["symbol"]: i for i, c in enumerate(supported)}
 
     if path.exists():
         try:
             data = json.loads(path.read_text())
-
-            # 🔥 ここで取得
             generated_at = data.get("meta", {}).get("generated_at")
-
             items = data.get("items", [])
 
             for item in items:
-
                 data_block = item.get("data") or {}
                 metrics = data_block.get("metrics") or {}
                 prices = data_block.get("prices") or {}
                 meta = item.get("meta") or {}
 
                 past = prices.get("past") or []
-                if not past:
-                    continue
+                if not past: continue
 
                 symbol_full = meta.get("symbol") or data_block.get("symbol") or ""
                 base_symbol = symbol_full.replace("USDT", "")
 
                 current_price = float(metrics.get("current", past[-1]))
                 predicted_price = float(metrics.get("predicted", current_price))
-
                 diff = float(metrics.get("diff", 0))
                 pct_change = float(metrics.get("pct_change", 0))
 
@@ -124,32 +161,18 @@ def index(request: Request):
                     "change_percent": pct_change,
                     "trend": [float(x) for x in past[-30:]]
                 })
-
         except Exception as e:
             print("INDEX LOAD ERROR:", e)
 
-    # =====================
-    # 🔥 ソートロジック
-    # =====================
-
     if sort == "change_desc":
         coins.sort(key=lambda x: x["change_percent"], reverse=True)
-
     elif sort == "change_asc":
         coins.sort(key=lambda x: x["change_percent"])
-
     elif sort == "marketcap_asc":
-        coins.sort(
-            key=lambda x: symbol_order.get(x["symbol"], 9999),
-            reverse=True
-        )
-
+        coins.sort(key=lambda x: symbol_order.get(x["symbol"], 9999), reverse=True)
     else:
-        # 🔥 デフォルト（時価総額 大きい順）
         coins.sort(key=lambda x: symbol_order.get(x["symbol"], 9999))
         sort = "marketcap_desc"
-
-    # =====================
 
     return templates.TemplateResponse(
         "index.html",
@@ -157,7 +180,8 @@ def index(request: Request):
             "request": request,
             "coins": coins,
             "current_sort": sort,
-            "last_updated": generated_at,  # 🔥 ここ重要
+            "last_updated": generated_at,
+            "accuracy_ranking": accuracy_ranking,
             **seo_context(
                 title="Crypto AI Prediction",
                 description="Crypto AI Prediction platform",
@@ -168,326 +192,110 @@ def index(request: Request):
     )
 
 # =====================
-# Prediction Page
+# Other Pages (変更なし)
 # =====================
 
 @app.get("/prediction", response_class=HTMLResponse)
-def prediction_page(
-    request: Request,
-    symbol: str = Query(None)
-):
-
+def prediction_page(request: Request, symbol: str = Query(None)):
     return templates.TemplateResponse(
         "prediction.html",
         {
             "request": request,
             "initial_symbol": symbol or "",
-            **seo_context(
-                title="Prediction | Crypto AI",
-                description="AI crypto price prediction",
-                keywords="crypto prediction ai",
-                canonical="https://cryptoaipredict.com/prediction",
-            ),
+            **seo_context(title="Prediction | Crypto AI", description="AI crypto price prediction", keywords="crypto prediction ai", canonical="https://cryptoaipredict.com/prediction"),
         },
     )
 
-
-# =====================
-# Visualize Page
-# =====================
-
 @app.get("/visualize", response_class=HTMLResponse)
 def visualize_page(request: Request):
-
     return templates.TemplateResponse(
         "visualize.html",
         {
             "request": request,
-            **seo_context(
-                title="Market Overview | Crypto AI",
-                description="AI-powered crypto market overview",
-                keywords="crypto market ranking",
-                canonical="https://cryptoaipredict.com/visualize",
-            ),
+            **seo_context(title="Market Overview | Crypto AI", description="AI-powered crypto market overview", keywords="crypto market ranking", canonical="https://cryptoaipredict.com/visualize"),
         },
     )
 
-
-# =====================
-# Static Pages
-# =====================
-
 @app.get("/about", response_class=HTMLResponse)
 def about(request: Request):
-    return templates.TemplateResponse(
-        "about.html",
-        {"request": request, **seo_context(
-            title="About",
-            description="About Crypto AI",
-            keywords="about",
-            canonical="https://cryptoaipredict.com/about",
-        )},
-    )
-
+    return templates.TemplateResponse("about.html", {"request": request, **seo_context(title="About", description="About Crypto AI", keywords="about", canonical="https://cryptoaipredict.com/about")})
 
 @app.get("/privacy", response_class=HTMLResponse)
 def privacy(request: Request):
-    return templates.TemplateResponse(
-        "privacy.html",
-        {"request": request, **seo_context(
-            title="Privacy Policy",
-            description="Privacy Policy",
-            keywords="privacy",
-            canonical="https://cryptoaipredict.com/privacy",
-        )},
-    )
-
+    return templates.TemplateResponse("privacy.html", {"request": request, **seo_context(title="Privacy Policy", description="Privacy Policy", keywords="privacy", canonical="https://cryptoaipredict.com/privacy")})
 
 @app.get("/terms", response_class=HTMLResponse)
 def terms(request: Request):
-    return templates.TemplateResponse(
-        "terms.html",
-        {"request": request, **seo_context(
-            title="Terms of Service",
-            description="Terms",
-            keywords="terms",
-            canonical="https://cryptoaipredict.com/terms",
-        )},
-    )
-
+    return templates.TemplateResponse("terms.html", {"request": request, **seo_context(title="Terms of Service", description="Terms", keywords="terms", canonical="https://cryptoaipredict.com/terms")})
 
 @app.get("/contact", response_class=HTMLResponse)
 def contact(request: Request):
-    return templates.TemplateResponse(
-        "contact.html",
-        {"request": request, **seo_context(
-            title="Contact",
-            description="Contact",
-            keywords="contact",
-            canonical="https://cryptoaipredict.com/contact",
-        )},
-    )
-
+    return templates.TemplateResponse("contact.html", {"request": request, **seo_context(title="Contact", description="Contact", keywords="contact", canonical="https://cryptoaipredict.com/contact")})
 
 # =====================
-# Prediction API
+# API Endpoints (変更なし)
 # =====================
 
 @app.get("/predict")
-def api_predict(
-    symbol: str = Query(...),
-    interval: str = Query("1h"),
-    horizon: int = Query(1, ge=1, le=30),
-):
+def api_predict(symbol: str = Query(...), interval: str = Query("1h"), horizon: int = Query(1, ge=1, le=30)):
     try:
         result = predict(symbol, interval, horizon)
-
-        if result.get("status") != "ok":
-            return result
-
+        if result.get("status") != "ok": return result
         dto = build_prediction_dto(result)
-
-        return {
-            "meta": {
-                "symbol": dto["symbol"],
-                "interval": dto["meta"]["interval"],
-                "timezone": "UTC",
-                "last_update": int(
-                    datetime.now(timezone.utc).timestamp() * 1000
-                ),
-            },
-            "data": dto,
-        }
-
+        return {"meta": {"symbol": dto["symbol"], "interval": dto["meta"]["interval"], "timezone": "UTC", "last_update": int(datetime.now(timezone.utc).timestamp() * 1000)}, "data": dto}
     except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={
-                "status": "error",
-                "error": str(e),
-                "traceback": traceback.format_exc(),
-            },
-        )
-
-
-# =====================
-# Symbols API
-# =====================
+        return JSONResponse(status_code=500, content={"status": "error", "error": str(e), "traceback": traceback.format_exc()})
 
 @app.get("/symbols")
 def api_symbols(interval: str = Query("1h")):
-    try:
-        return get_supported(interval)
-    except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"error": str(e)},
-        )
-
-
-# =====================
-# Market Overview API
-# =====================
+    try: return get_supported(interval)
+    except Exception as e: return JSONResponse(status_code=500, content={"error": str(e)})
 
 @app.get("/api/market-overview")
-def api_market_overview(
-    interval: str = Query("1h"),
-    limit: int = Query(20, ge=1, le=200)
-):
-
+def api_market_overview(interval: str = Query("1h"), limit: int = Query(20, ge=1, le=200)):
     path = CACHE_DIR / f"market_overview_{interval}.json"
-
-    if not path.exists():
-        return JSONResponse(
-            status_code=503,
-            content={"error": "Market overview cache not ready"},
-        )
-
+    if not path.exists(): return JSONResponse(status_code=503, content={"error": "Market overview cache not ready"})
     try:
         data = json.loads(path.read_text())
-        items = data.get("items", [])[:limit]
-
-        return {
-            "items": items,
-            "meta": data.get("meta", {}),
-        }
-
-    except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"error": str(e)},
-        )
-
-
-# =====================
-# Accuracy API
-# =====================
+        return {"items": data.get("items", [])[:limit], "meta": data.get("meta", {})}
+    except Exception as e: return JSONResponse(status_code=500, content={"error": str(e)})
 
 @app.get("/accuracy")
-def get_accuracy(
-    interval: str = Query(...),
-    symbol: str = Query(...)
-):
-
+def get_accuracy(symbol: str = Query(...), interval: str = Query("1h")):
     conn = get_connection()
-    cur = conn.cursor()
-
-    horizon_map = {
-        "1h": 3,
-        "1d": 1,
-        "1w": 1
-    }
-
-    horizon = horizon_map.get(interval, 3)
-
-    cur.execute("""
-        SELECT
-          SUM(
-            CASE
-              WHEN (predicted_price - base_price) *
-                   (actual_price - base_price) > 0
-              THEN 1 ELSE 0
-            END
-          ) AS wins,
-          COUNT(*) AS total,
-          AVG(ABS(predicted_price - actual_price) / base_price) * 100 AS mae
-        FROM predictions
-        WHERE evaluated = 1
-        AND timeframe = %s
-        AND horizon = %s
-    """, (interval, horizon))
-
-    row = cur.fetchone()
-
-    cur.close()
-    conn.close()
-
-    if not row:
-        return {"status": "ok", "accuracy": None, "mae": None, "total": 0}
-
-    wins, total, mae = row
-
-    if not total:
-        return {"status": "ok", "accuracy": None, "mae": None, "total": 0}
-
-    accuracy = round(wins / total * 100, 2)
-    mae = round(mae, 2) if mae is not None else None
-
-    return {
-        "status": "ok",
-        "accuracy": accuracy,
-        "mae": mae,
-        "total": total
-    }
-
-
-# =====================
-# Dynamic Sitemap
-# =====================
-
-from fastapi.responses import Response
-from datetime import datetime
+    cur = conn.cursor(dictionary=True)
+    full_symbol = symbol if "USDT" in symbol else symbol + "USDT"
+    try:
+        cur.execute("""
+            SELECT AVG(ABS(predicted_price - actual_price) / base_price) * 100 AS mae_val
+            FROM predictions WHERE symbol = %s AND evaluated = 1
+        """, (full_symbol,))
+        mae_row = cur.fetchone()
+        mae = round(mae_row['mae_val'], 2) if mae_row and mae_row['mae_val'] is not None else 0.00
+        cur.execute("SELECT accuracy, count FROM accuracy_ranking WHERE symbol = %s OR symbol = %s LIMIT 1", (symbol, full_symbol))
+        row = cur.fetchone()
+        if not row: return {"status": "ok", "accuracy": 0, "mae": mae, "total": 0}
+        return {"status": "ok", "accuracy": row['accuracy'], "mae": mae, "total": row['count']}
+    except Exception as e:
+        print(f"Accuracy API Error: {e}")
+        return {"status": "error", "message": str(e)}
+    finally:
+        cur.close()
+        conn.close()
 
 @app.get("/sitemap.xml", include_in_schema=False)
 def dynamic_sitemap():
-
     base_url = "https://cryptoaipredict.com"
     urls = []
-
-    # =====================
-    # ① FastAPIルートから自動取得
-    # =====================
     for route in app.routes:
         if hasattr(route, "path"):
             path = route.path
-
-            # 除外対象
-            if (
-                path.startswith("/api")
-                or path.startswith("/static")
-                or path.startswith("/health")
-                or path.startswith("/docs")
-                or path.startswith("/redoc")
-                or path.startswith("/openapi")
-                or path in ["/predict", "/symbols", "/accuracy"]
-                or "{" in path  # パラメータ付き除外
-                or path == "/sitemap.xml"
-            ):
-                continue
-
+            if path.startswith(("/api", "/static", "/health", "/docs", "/redoc", "/openapi")) or path in ["/predict", "/symbols", "/accuracy", "/sitemap.xml"] or "{" in path: continue
             urls.append(f"{base_url}{path}")
-
-    # =====================
-    # ② 銘柄ページを自動追加
-    # =====================
     try:
-        supported = get_supported("1h")
-        for coin in supported:
-            symbol = coin.get("symbol")
-            if symbol:
-                urls.append(f"{base_url}/prediction?symbol={symbol}")
-    except Exception as e:
-        print("SITEMAP SYMBOL LOAD ERROR:", e)
-
-    # =====================
-    # ③ XML生成
-    # =====================
-    now = datetime.utcnow().strftime("%Y-%m-%d")
-
-    xml_items = ""
-    for url in sorted(set(urls)):  # 重複除去＋ソート
-        xml_items += f"""
-    <url>
-        <loc>{url}</loc>
-        <lastmod>{now}</lastmod>
-        <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-    </url>"""
-
-    xml = f"""<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-{xml_items}
-</urlset>
-"""
-
-    return Response(content=xml.strip(), media_type="application/xml")
+        for coin in get_supported("1h"):
+            if coin.get("symbol"): urls.append(f"{base_url}/prediction?symbol={coin.get('symbol')}")
+    except: pass
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    xml_items = "".join([f"<url><loc>{u}</loc><lastmod>{now}</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>" for u in sorted(set(urls))])
+    return Response(content=f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{xml_items}</urlset>', media_type="application/xml")
