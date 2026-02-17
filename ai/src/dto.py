@@ -11,7 +11,7 @@ def get_actual_performance(symbol: str, interval: str):
     cur = conn.cursor(dictionary=True)
     
     try:
-        # カラム指定をせず * で取得し、コード側で安全に処理する
+        # 評価済みのデータを取得
         cur.execute("""
             SELECT *
             FROM predictions
@@ -31,29 +31,36 @@ def get_actual_performance(symbol: str, interval: str):
             pred = float(row.get('predicted_price') or 0)
             actual = float(row.get('actual_price') or 0)
             
-            # 優先順位をつけて基準価格を取得 (current_priceがない対策)
-            base = float(row.get('current_price') or row.get('initial_price') or actual)
+            # --- 本番DBの正しいカラム名 'base_price' を使用 ---
+            base = float(row.get('base_price') or 0)
 
-            # 方向判定
-            if (pred - base) * (actual - base) >= 0:
-                hits += 1
+            # 方向判定のロジック
+            if base == 0:
+                # 基準価格が取得できない場合は判定に含めない
+                continue
+            else:
+                diff_pred = pred - base
+                diff_actual = actual - base
+                # 予測と実績が同じ方向に動いた場合のみ的中とする
+                if diff_pred * diff_actual > 0:
+                    hits += 1
             
-            # MAE算出
+            # MAE算出 (実績価格に対する誤差の割合 %)
             if actual > 0:
                 total_mae_pct += (abs(pred - actual) / actual) * 100
         
-        accuracy = round((hits / count) * 100, 2)
-        avg_mae = round(total_mae_pct / count, 2)
+        # 的中率と平均誤差の計算
+        accuracy = round((hits / count) * 100, 2) if count > 0 else 0.0
+        avg_mae = round(total_mae_pct / count, 2) if count > 0 else 0.0
 
         return accuracy, count, avg_mae
     except Exception as e:
-        print(f"DTO Logic Error for {symbol}: {e}")
+        print(f"DTO Error for {symbol}: {e}")
         return 0.0, 0, 0.0
     finally:
         cur.close()
         conn.close()
 
-# --- 以下の関数は変更なし ---
 def load_price_history(symbol: str, interval: str, points: int = 30):
     path = DATA_DIR / f"{symbol}_{interval}.csv"
     if not path.exists():
@@ -112,6 +119,7 @@ def build_prediction_dto(result: dict):
         }
     }
 
+    # 的中率、件数、MAEを取得
     accuracy, count, mae = get_actual_performance(result["symbol"], result["interval"])
 
     return {
@@ -125,7 +133,6 @@ def build_prediction_dto(result: dict):
             "predicted": predicted,
             "diff": diff,
             "pct_change": pct_change,
-            "current_price_at": current_price_at,
             "accuracy": accuracy,
             "count": count,
             "mae": mae,
