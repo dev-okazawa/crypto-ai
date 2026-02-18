@@ -36,9 +36,15 @@ def train_price_model(symbol: str, interval: str, horizon: int = 1):
     df_feat["target"] = make_price_target(df_feat, horizon=horizon)
     df_feat = df_feat.dropna()
 
-    if len(df_feat) < 150:
-        print(f"[SKIP] {symbol} {interval} (data too small: {len(df_feat)})")
+    # --- 修正箇所: 時間軸(interval)に応じて最低必要行数を可変にする ---
+    # 週足(1w)はデータ密度が低いため、20行（約5ヶ月分）あれば学習を許可する。
+    # 日足(1d)・時間足(1h)は、精度担保のため従来の150行を維持。
+    min_data_rows = 20 if interval == "1w" else 150
+
+    if len(df_feat) < min_data_rows:
+        print(f"[SKIP] {symbol} {interval} (data too small: {len(df_feat)} < {min_data_rows})")
         return
+    # -------------------------------------------------------------
 
     feature_cols = [
         col for col in df_feat.columns
@@ -76,6 +82,9 @@ def main():
     for file in files:
         try:
             name = file.replace(".csv", "")
+            # ファイル名が symbol_interval.csv であることを想定
+            if "_" not in name: continue
+            
             symbol, interval = name.rsplit("_", 1)
             train_price_model(symbol, interval, horizon=1)
 
